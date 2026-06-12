@@ -9118,6 +9118,101 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   attackCooldown: 0.6
+--- !u!1 &1673605465
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1673605466}
+  - component: {fileID: 1673605467}
+  - component: {fileID: 1673605468}
+  - component: {fileID: 1673605469}
+  m_Layer: 0
+  m_Name: Map
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1673605466
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1673605465}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1673605467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1673605465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08e6cab9fdd7dcd4ab5d32a22416a18f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapManager
+  Quadtree: {fileID: 1673605469}
+  spawnField: 0000000000000000
+  spawnRoomCount: 1
+  poiCount: 2
+  treasureRoomCount: 1
+  bossRoomCount: 1
+--- !u!114 &1673605468
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1673605465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9187097f49384b4ebfc15beb08530ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomCollection
+  connectorRooms:
+  - {fileID: 2051560339278910390, guid: 6c159470e5d5bec428106fd9f1de95d6, type: 3}
+  spawnRooms:
+  - {fileID: 4318727135850453802, guid: 20917c64740462844aa37a673db2c9ef, type: 3}
+  poiRooms:
+  - {fileID: 6203517282151148659, guid: d9528186685c848438d1df3f5e35f582, type: 3}
+  treasureRooms:
+  - {fileID: 6203517282151148659, guid: d9528186685c848438d1df3f5e35f582, type: 3}
+  bossRooms:
+  - {fileID: 6478441314501868828, guid: a41603ce15f3abf4ea4c629e23873d37, type: 3}
+  stairsRoom:
+  - {fileID: 4318727135850453802, guid: 20917c64740462844aa37a673db2c9ef, type: 3}
+--- !u!114 &1673605469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1673605465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 044c8f806b5529b43b4503589b03f15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TreeBranch
+  mapManager: {fileID: 1673605467}
+  roomCollection: {fileID: 1673605468}
+  upperLeft: {fileID: 0}
+  upperRight: {fileID: 0}
+  lowerLeft: {fileID: 0}
+  lowerRight: {fileID: 0}
+  room: {fileID: 0}
 --- !u!1 &1712506158
 GameObject:
   m_ObjectHideFlags: 0
@@ -11149,3 +11244,4 @@ SceneRoots:
   - {fileID: 400120503}
   - {fileID: 1110113934}
   - {fileID: 1826844389}
+  - {fileID: 1673605466}
