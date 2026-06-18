@@ -5,9 +5,7 @@ public class TreeBranch : MonoBehaviour
     public MapManager mapManager;
     public RoomCollection roomCollection;
 
-    private static int layersForLeaf = 3;       //how many layers before it is a tree
-
-
+    private static int layersForLeaf = 3;       //how many layers before it is a leaf
 
     private int layer;
     private bool isLeaf;
@@ -17,7 +15,7 @@ public class TreeBranch : MonoBehaviour
     public TreeBranch lowerLeft = null;
     public TreeBranch lowerRight = null;
 
-    public GameObject room = null;              //beim spielfeld zugewiesener raum
+    public GameObject room = null;              //beim spielfeld zugewiesener Raum
 
     public TreeBranch(int layer, MapManager mapmanager, RoomCollection roomcollection)        //make a new tree 
     {
@@ -34,7 +32,7 @@ public class TreeBranch : MonoBehaviour
         this.roomCollection = roomcollection;
     }
 
-    public void createNewBranch(int dir)            //branch helper (erstellt branch in der richtung mit automatischer layer und verweisen)
+    public void createNewBranch(int dir)            //branch helper (erstellt branch in der richtung mit automatischer layer und Verweisen)
     {
         if (dir == 1)
         {
@@ -54,23 +52,23 @@ public class TreeBranch : MonoBehaviour
         }
     }
 
-    public void createRoom(int type, int path, int roomID)                      //laufe den pfad und erstelle am ende den raum
+    public void createRoom(int type, int path, int roomID)                      //laufe den Pfad und erstelle am Ende den Raum
     {
-        if (path == 0)                  //pfad ist gelaufen
+        if (path == 0)                  //Pfad ist gelaufen
         {
-            room = roomCollection.getRandomRoom(type);              //hole dir ein raum preset
-            int[] temp = mapManager.getRoomCoordsFromID(roomID);    //hole dir simpleMap X und y
+            room = roomCollection.getRandomRoom(type);              //hole dir ein Raum preset
+            int[] temp = mapManager.getRoomCoordsFromID(roomID);    //hole dir SimpleMap X und Y
             Instantiate(room, convertXYMapToV3(temp[0], temp[1]), Quaternion.identity);     //übersetze SimpleMap X und Y zu Vector3 x und z
         }
-        else if (path != 0)             //pfad nicht abgelaufen
+        else if (path != 0)             //Pfad nicht abgelaufen
         {
-            if(path % 10 == 1)          //wohin geht der pfad?
+            if(path % 10 == 1)          //wohin geht der Pfad?
             {
                 if(upperLeft == null)   //ist da schon ein branch?
                 {
                     createNewBranch(1); //falls nein erstelle neuen branch
                 }
-                upperLeft.createRoom(type, path / 10, roomID);  //platziere den raum
+                upperLeft.createRoom(type, path / 10, roomID);  //platziere den Raum
             }
             else if (path % 10 == 2)    
             {

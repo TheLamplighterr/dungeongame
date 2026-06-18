@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class MapManager : MonoBehaviour
@@ -183,7 +185,7 @@ public class MapManager : MonoBehaviour
 
     public static int randomI(int x, int y)
     {
-        return (int) Random.Range(x, y + 1);
+        return (int) UnityEngine.Random.Range(x, y + 1);
     }
 
     private void GenerateMap()
@@ -201,6 +203,14 @@ public class MapManager : MonoBehaviour
         PlaceRooms(treasureRoom, treasureRoomCount);
 
         //prepareConnections    (assign weights etc)
+        prepareConnections();
+
+        for (int i = 0; i < connections.Count; i++)
+        {
+            Console.WriteLine("Verbindung "+ i + ": ");
+            Console.WriteLine("Weight: " + connections[i][0]);
+            Console.WriteLine("ConnectedPoints: " + connections[i][1] + " and " + connections[i][2]);
+        }
 
         //decideConnections     (MST)
 
@@ -288,11 +298,186 @@ public class MapManager : MonoBehaviour
 
 
     //MST connection creation rules
-        //boss-stairs   only
-        //boss/stairs !- spawn
-        //boss - other = max weight
+    //boss-stairs   only
+    //boss/stairs !- spawn
+    //boss - other = max weight
+
+    List<int[]> connections = new List<int[]>();
+    //connection form: weight, p1, p2
+
+    List<int[]> families = new List<int[]>();
+    //familyForm: roomListID, famInt
+
+    int calculateWeightFromXY(int x, int y, int x2, int y2)
+    {
+        int result = 0;
+        int temp = x - x2;
+        if (temp < 0) { temp = temp * -1; }
+        result = temp;
+        temp = y - y2;
+        if (temp < 0) { temp = temp * -1; }
+        result = result + temp;
+        Console.WriteLine(result);
+        return result;
+    }
+
+    void prepareFamilies()
+    {
+        families = new List<int[]>();
+        for (int i = 0; i < roomList.Count; i++)
+        {
+            if (roomList[i][listRoomType] != bossRoom && roomList[i][listRoomType] != stairsRoom)
+            {
+                families.Add(new int[2] { roomList[i][listRoomID], 0 });
+                Console.WriteLine("prepared a point for family");
+            }
+        }
+    }
+
+    void prepareConnections()
+    {
+        prepareFamilies();      //für jeden zu beachtenden Raum wird ein punkt mit Familie und Verweis erstellt
+
+        List<int[]> rawConnections = new List<int[]>();
+        for (int i = 0; i < families.Count; i++)    //alle Punkte sollen versuchen sich mit allen Punkte zu verbinden
+        {
+                for (int j = 0; j < families.Count; j++)  //alle Punkte werden mit allen Punkten verbunden
+                { 
+                    if(i != j) //  ein Punkt soll sich nicht mit sich selbst verbinden
+                    {
+                        rawConnections.Add(new int[3]
+                        {   //    \/ aus X und Y der 2 Punkte wird ein Gewicht berechnet
+                            calculateWeightFromXY(roomList[i][listRoomX], roomList[i][listRoomY], roomList[j][listRoomX],roomList[j][listRoomY]),
+                            i,          //Punkt 1
+                            j           //Punkt 2
+                        }
+                        );
+                    }
+                }
+        }
+        
+        rawConnections = filterConnections(rawConnections); //doppelte Verbindungen werden entfernt
+
+        rawConnections = sortConnectionsByWeight(rawConnections);   //Verbindungen werden der Größe nach sortiert
+
+        int familyCount = 0;
+
+        for (int i = 0; i < rawConnections.Count; i++)  //versuche alle rohen Verbindungen zu bestätigen
+        {
+
+            if (families[rawConnections[i][1]][1] == 0 && families[rawConnections[i][2]][1] == 0)   //beide Punkte ohne Familie -> neue erstellen
+            {
+                familyCount++;              
+                families[rawConnections[i][1]][1] = familyCount;
+                families[rawConnections[i][2]][1] = familyCount;
+
+                connections.Add(rawConnections[i]);
+            }
+            else if (families[rawConnections[i][1]][1] == families[rawConnections[i][2]][1])        //filter: gleiche Familie = schon verbunden -> skip
+            {
+                //wenn sie bereits verbunden sind abbrechen
+            }
+            else if (families[rawConnections[i][1]][1] != 0 && families[rawConnections[i][2]][1] == 0)  //1 hat Familie, 2 nicht: 1 <- 2
+            {
+                families[rawConnections[i][2]][1] = families[rawConnections[i][1]][1];
+
+                connections.Add(rawConnections[i]);
+            }
+            else if (families[rawConnections[i][1]][1] == 0 && families[rawConnections[i][2]][1] != 0)  //2 hat Familie, 1 nicht: 2 <- 1
+            {
+                families[rawConnections[i][1]][1] = families[rawConnections[i][2]][1];
+
+                connections.Add(rawConnections[i]);
+            }
+            else if (families[rawConnections[i][1]][1] != 0 && families[rawConnections[i][2]][1] != 0)  //beide haben Familie: merge 1 <- 2
+            {
+                mergeFamily(families[rawConnections[i][2]][1], families[rawConnections[i][1]][1]);
+
+                connections.Add(rawConnections[i]);
+            }
+        }
 
 
+
+
+
+    }
+
+    void mergeFamily(int pre, int post)
+    {
+        for (int i = 0; i < families.Count; i++)
+        {
+            if(families[i][1] == pre)
+            {
+                families[i][1] = post;
+            }
+        }
+    }
+
+    List<int[]> sortConnectionsByWeight(List<int[]> given)
+    {
+        List<int[]> result = given;
+        result.Sort((a, b) => a[0] - b[0]);
+        return result;
+    }
+
+    List<int[]> filterConnections(List<int[]> given)
+    {
+        List<int[]> result = new List<int[]>();
+
+        for (int i = 0; i < given.Count; i++) 
+        {
+            if(!connectionIsDouble(result, given[i][1], given[i][2]))
+            {
+                    result.Add(given[i]);
+            }
+        }
+
+        return result;
+    }
+
+    bool connectionIsDouble(List<int[]> given, int p1, int p2)
+    {
+        for (int i = 0; i < given.Count; i++)
+        {
+                if ((given[i][1] == p1 && given[i][2] == p2) || (given[i][1] == p2 && given[i][2] == p1))
+                {
+                    return true;
+                }
+            }
+            return false;
+    }
+
+
+    /*
+    each point: int family (id compared point) 
+    int[roomNR] families {familyID} (base -1 if no family)
+
+    int [] possibleConnections {0,1} calculate weight by distance, sort by weight
+    
+
+    families [familyID][connections]
+
+    look at possible connection(allready sorted by weight):
+    point 0: getFamily 
+    point 1: getFamily
+    if family is same -> cancel, moove on
+    else all in families where family == point 1 family = point 0 family
+ 
+    repeat for all sorted possible connections
+
+
+    make algorythm to follow connection (try straight, zigzag random if not straight(unless obstructed: in that case try to moove arround the object))
+
+    look for shortest connection with longest path for boss room
+
+
+    save path for a bit (save as array, maybe dir) -> if path works -> create rooms, edit connection saves)
+
+    quadtree apply openings
+
+
+    */
 
 
     void Start()
