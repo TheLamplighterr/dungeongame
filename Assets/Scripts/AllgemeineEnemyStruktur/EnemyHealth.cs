@@ -148,6 +148,8 @@ public class EnemyHealth : MonoBehaviour
     {
         isDead = true;
 
+        RunStatsManager.Instance.AddKill();
+
         SpawnDeathEffect();
 
         // disable visuals + interaction

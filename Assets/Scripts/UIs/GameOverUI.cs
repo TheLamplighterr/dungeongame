@@ -21,6 +21,11 @@ public class GameOverUI : MonoBehaviour
 
     private Vector2 titleStartPos;
 
+    [Header("Run Stats")]
+    public GameObject runStatsPanel;
+    public CanvasGroup runStatsGroup;
+    public RunStatsUI runStatsUI;
+
     void Awake()
     {
         gameOverPanel.SetActive(false);
@@ -28,6 +33,18 @@ public class GameOverUI : MonoBehaviour
         canvasGroup.alpha = 0f;
         canvasGroup.interactable = false;
         canvasGroup.blocksRaycasts = false;
+
+        if (runStatsPanel != null)
+        {
+            runStatsPanel.SetActive(false);
+        }
+
+        if (runStatsGroup != null)
+        {
+        runStatsGroup.alpha = 0f;
+        runStatsGroup.interactable = false;
+        runStatsGroup.blocksRaycasts = false;
+        }
 
         if (titleText != null)
             titleStartPos = titleText.anchoredPosition;
@@ -114,4 +131,37 @@ public class GameOverUI : MonoBehaviour
         Time.timeScale = 1f;
         SceneManager.LoadScene("Main Menü");
     }
+
+    public void OpenRunStats()
+{
+    gameOverPanel.SetActive(false);
+
+    runStatsPanel.SetActive(true);
+
+    runStatsUI.UpdateStats(); 
+
+    if (runStatsGroup != null)
+    {
+        runStatsGroup.alpha = 1f;
+        runStatsGroup.interactable = true;
+        runStatsGroup.blocksRaycasts = true;
+    }
+}
+
+    public void CloseRunStats()
+{
+    runStatsPanel.SetActive(false);
+    gameOverPanel.SetActive(true);
+
+    if (runStatsGroup != null)
+    {
+        runStatsGroup.alpha = 0f;
+        runStatsGroup.interactable = false;
+        runStatsGroup.blocksRaycasts = false;
+    }
+
+    canvasGroup.alpha = 1f;
+    canvasGroup.interactable = true;
+    canvasGroup.blocksRaycasts = true;
+}
 }
