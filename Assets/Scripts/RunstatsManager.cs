@@ -11,6 +11,9 @@ public class RunStatsManager : MonoBehaviour
 
     private bool runActive = true;
 
+    [Header("Score")]
+    public int currentScore;
+
     private void Awake()
     {
         if (Instance == null)
@@ -30,6 +33,16 @@ public class RunStatsManager : MonoBehaviour
         {
             runTime += Time.deltaTime;
         }
+         // DEBUG TEST
+         if (Input.GetKeyDown(KeyCode.P))
+        {
+        enemiesKilled += 3;
+        dungeonDepth = 2;
+
+        currentScore = CalculateScore();
+
+        Debug.Log("TEST SCORE: " + currentScore);
+        }
     }
 
     public void AddKill()
@@ -47,7 +60,10 @@ public class RunStatsManager : MonoBehaviour
     {
         runActive = false;
 
+        currentScore = CalculateScore();
+
         Debug.Log("=== RUN ENDET ===");
+        Debug.Log("Score: " + currentScore);
         Debug.Log("Kills: " + enemiesKilled);
         Debug.Log("Zeit: " + GetFormattedTime());
         Debug.Log("Tiefe: " + dungeonDepth);
@@ -68,4 +84,20 @@ public class RunStatsManager : MonoBehaviour
         runTime = 0;
         runActive = true;
     }
+
+    public int CalculateScore()
+{
+    int score = 0;
+
+    // Kills sind wichtig
+    score += enemiesKilled * 100;
+
+    // Tiefe ist sehr wichtig
+    score += dungeonDepth * 500;
+
+    // Zeitbonus (je schneller desto besser)
+    score += Mathf.Max(0, 1000 - Mathf.FloorToInt(runTime));
+
+    return score;
+}
 }

@@ -7,6 +7,7 @@ public class RunStatsUI : MonoBehaviour
     public TMP_Text killsText;
     public TMP_Text timeText;
     public TMP_Text depthText;
+    public TMP_Text scoreText;
 
     public void UpdateStats()
     {
@@ -21,5 +22,7 @@ public class RunStatsUI : MonoBehaviour
 
         depthText.text = "Dungeon Depth: " +
                          RunStatsManager.Instance.dungeonDepth;
+        scoreText.text = "Score: " + 
+                         RunStatsManager.Instance.currentScore;
     }
 }
