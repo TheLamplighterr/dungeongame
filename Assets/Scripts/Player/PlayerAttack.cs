@@ -9,7 +9,26 @@ public class PlayerAttack : MonoBehaviour
     public LayerMask enemyLayer;
     public float attackCooldown = 1f;
 
-    private bool canAttack = true;
+    public bool canAttack = true;
+
+    // ===== Damage Boost =====
+    private Coroutine attackBoostRoutine;
+    private int baseDamage;
+
+    // ===== VFX =====
+    [Header("VFX")]
+    public ParticleSystem damageBoostVFX;
+
+
+    void Awake()
+{
+    Debug.Log($"[PlayerHealth] ACTIVE INSTANCE: {gameObject.name} | ID: {GetInstanceID()}");
+}
+
+    void Start()
+    {
+        baseDamage = damage;
+    }
 
     void Update()
     {
@@ -31,36 +50,66 @@ public class PlayerAttack : MonoBehaviour
     }
 
     void PerformAttack()
-{
-    Debug.Log("[PlayerAttack] Attack triggered");
-
-    // ALLE Collider in der Range suchen
-    Collider[] allHits = Physics.OverlapSphere(
-        transform.position,
-        attackRange
-    );
-
-    Debug.Log("[PlayerAttack] Total colliders found: " + allHits.Length);
-
-    foreach (Collider hit in allHits)
     {
-        Debug.Log(
-            "[PlayerAttack] Found Collider: " +
-            hit.name +
-            " | Layer: " +
-            LayerMask.NameToLayer(LayerMask.LayerToName(hit.gameObject.layer))
-        );
+        Debug.Log($"🗡 Angriff gestartet! Schaden: {damage}");
 
-        EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
+        Collider[] allHits = Physics.OverlapSphere(transform.position, attackRange);
 
-        if (enemy != null)
+        Debug.Log("[PlayerAttack] Total colliders found: " + allHits.Length);
+
+        foreach (Collider hit in allHits)
         {
-            Debug.Log("[PlayerAttack] ENEMY FOUND: " + enemy.name);
+            EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
 
-            enemy.TakeDamage(damage);
+            if (enemy != null)
+            {
+                Debug.Log($" Treffer auf {enemy.name}! Schaden: {damage}");
+                enemy.TakeDamage(damage);
+            }
         }
     }
-}
+
+    // ==========================
+    // DAMAGE BOOST
+    // ==========================
+
+    public void BoostDamage(int bonus, float duration)
+    {
+        if (attackBoostRoutine != null)
+        {
+            StopCoroutine(attackBoostRoutine);
+        }
+
+        attackBoostRoutine = StartCoroutine(DamageBoostRoutine(bonus, duration));
+    }
+
+    IEnumerator DamageBoostRoutine(int bonus, float duration)
+    {
+        damage = baseDamage + bonus;
+
+        // VFX START
+        if (damageBoostVFX != null)
+        {
+            damageBoostVFX.Play();
+        }
+
+        Debug.Log($"⚔ Damage Boost aktiv! Schaden: {damage}");
+
+        yield return new WaitForSeconds(duration);
+
+        damage = baseDamage;
+
+        // VFX STOP
+        if (damageBoostVFX != null)
+        {
+            damageBoostVFX.Stop();
+        }
+
+        Debug.Log($"⚔ Damage Boost beendet. Schaden: {damage}");
+
+        attackBoostRoutine = null;
+    }
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

@@ -15,7 +15,11 @@ public class PauseMenuUI : MonoBehaviour
     public float fadeSpeed = 6f;
 
     private bool isPaused = false;
+    public bool IsPaused => isPaused;
     private Coroutine fadeRoutine;
+
+    [Header("References")]
+    public InventoryUI inventoryUI;
 
     void Start()
     {
@@ -27,21 +31,9 @@ public class PauseMenuUI : MonoBehaviour
     }
 
     void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (optionsPanel.activeSelf)
-            {
-                CloseOptions();
-                return;
-            }
-
-            if (isPaused)
-                ResumeGame();
-            else
-                PauseGame();
-        }
-    }
+{   
+        
+}
 
     public void PauseGame()
     {
@@ -127,4 +119,14 @@ public class PauseMenuUI : MonoBehaviour
         Time.timeScale = 1f;
         Application.Quit();
     }
+
+    public void OpenPause()
+{
+    PauseGame();
+}
+
+public void ClosePause()
+{
+    ResumeGame();
+}
 }

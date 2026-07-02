@@ -17,8 +17,14 @@ public class PlayerMovement : MonoBehaviour
     Vector3 velocity;
     bool isGrounded;
 
+    // Player can move or not (used for inventory UI)
+    public bool canMove = true;
+
     void Update()
     {
+        if (!canMove)
+            return;
+
         HandleGround();
         HandleMovement();
         HandleJumpAndGravity();
@@ -69,28 +75,22 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleJumpAndGravity()
     {
-        // Jump
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
-        // Gravity
         velocity.y += gravity * Time.deltaTime;
-
         controller.Move(velocity * Time.deltaTime);
     }
+
     private void OnControllerColliderHit(ControllerColliderHit hit)
-{
-    if (hit.gameObject.CompareTag("Enemy"))
     {
-        Vector3 pushDir = hit.moveDirection;
-
-        // Kein Hochdrücken
-        pushDir.y = 0;
-
-        // Spieler leicht zurückschieben
-        controller.Move(-pushDir * 0.05f);
+        if (hit.gameObject.CompareTag("Enemy"))
+        {
+            Vector3 pushDir = hit.moveDirection;
+            pushDir.y = 0;
+            controller.Move(-pushDir * 0.05f);
+        }
     }
-}
 }

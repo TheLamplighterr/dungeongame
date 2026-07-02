@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -25,6 +26,9 @@ public class PlayerHealth : MonoBehaviour
     public GameObject gameOverPanel;
     public GameOverUI gameOverUI;
 
+    [Header("Heal VFX")]
+    public ParticleSystem healVFX;
+
     void Start()
     {
         currentHealth = maxHealth;
@@ -40,7 +44,7 @@ public class PlayerHealth : MonoBehaviour
 
     void Update()
     {
-        //  Damage Flash Fade Out
+        // Damage Flash Fade Out
         if (damageFlash != null)
         {
             flashAlpha = Mathf.Lerp(flashAlpha, 0f, Time.deltaTime * flashSpeed);
@@ -58,7 +62,6 @@ public class PlayerHealth : MonoBehaviour
         if (debugLogs)
             Debug.Log($"[PlayerHealth] Took {damage} damage → HP: {currentHealth}/{maxHealth}");
 
-        //  Trigger Flash
         flashAlpha = 1f;
 
         UpdateUI();
@@ -70,46 +73,71 @@ public class PlayerHealth : MonoBehaviour
     }
 
     public void Heal(int amount)
+{
+    if (isDead) return;
+    
+
+    currentHealth += amount;
+    currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+    Debug.Log($"❤️ Healed +{amount} → HP: {currentHealth}/{maxHealth}");
+
+    UpdateUI();
+
+    // =========================
+    // HEAL VFX (robust)
+    // =========================
+    if (healVFX != null)
     {
-        if (isDead) return;
+        healVFX.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        healVFX.Play();
+    }
+}
 
-        currentHealth += amount;
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+    IEnumerator StopHealVFX()
+    {
+        yield return new WaitForSeconds(1f);
 
-        UpdateUI();
+        if (healVFX != null)
+            healVFX.Stop();
     }
 
     void UpdateUI()
-    {
-        if (healthSlider != null)
-        {
-            healthSlider.value = currentHealth;
-        }
+{
+    Debug.Log($"[UI] UpdateUI called | HP: {currentHealth}");
 
-        if (fillImage != null)
-        {
-            float t = (float)currentHealth / maxHealth;
-            fillImage.color = Color.Lerp(Color.red, Color.green, t);
-        }
+    if (healthSlider == null)
+    {
+        Debug.LogError("❌ healthSlider ist NULL!");
+        return;
     }
+
+    healthSlider.value = currentHealth;
+
+    if (fillImage != null)
+    {
+        float t = (float)currentHealth / maxHealth;
+        fillImage.color = Color.Lerp(Color.red, Color.green, t);
+    }
+}
 
     void Die()
-{
-    if (isDead) return;
-
-    isDead = true;
-
-    Debug.Log("💀 PLAYER DIED");
-
-    if (gameOverUI != null)
     {
-        gameOverUI.ShowGameOver();
-    }
-    else
-    {
-        Debug.LogError("GameOverUI NICHT im Inspector gesetzt!");
-    }
+        if (isDead) return;
 
-    Time.timeScale = 0f;
-}
+        isDead = true;
+
+        Debug.Log(" PLAYER DIED");
+
+        if (gameOverUI != null)
+        {
+            gameOverUI.ShowGameOver();
+        }
+        else
+        {
+            Debug.LogError("GameOverUI NICHT im Inspector gesetzt!");
+        }
+
+        Time.timeScale = 0f;
+    }
 }

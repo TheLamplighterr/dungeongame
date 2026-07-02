@@ -20,6 +20,7 @@ public class EnemyDamage : MonoBehaviour
         if (player == null)
             return;
 
+
         float distance = Vector3.Distance(
             transform.position,
             player.position

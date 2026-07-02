@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81baf3873f922ad459cf504ddd249dcb, type: 3}
+  m_Name: HealthItem
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemName: Heal
+  icon: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
+  description: 
+  itemType: 0
+  value: 25
+  worldPrefab: {fileID: 6813635070683330092, guid: 14745b34a285cf3468339d813e48581d, type: 3}

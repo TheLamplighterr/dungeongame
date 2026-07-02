@@ -48,7 +48,7 @@ public class RunStatsManager : MonoBehaviour
     public void AddKill()
     {
         enemiesKilled++;
-         Debug.Log("Enemy killed! Total Kills: " + enemiesKilled);
+        Debug.Log("Enemy killed! Total Kills: " + enemiesKilled);
     }
 
     public void SetDepth(int depth)
@@ -86,18 +86,18 @@ public class RunStatsManager : MonoBehaviour
     }
 
     public int CalculateScore()
-{
-    int score = 0;
+    {
+        int score = 0;
 
-    // Kills sind wichtig
-    score += enemiesKilled * 100;
+        // Kills sind wichtig
+        score += enemiesKilled * 100;
 
-    // Tiefe ist sehr wichtig
-    score += dungeonDepth * 500;
+        // Tiefe ist sehr wichtig
+        score += dungeonDepth * 500;
 
-    // Zeitbonus (je schneller desto besser)
-    score += Mathf.Max(0, 1000 - Mathf.FloorToInt(runTime));
+        // Zeitbonus (je schneller desto besser)
+        score += Mathf.Max(0, 1000 - Mathf.FloorToInt(runTime));
 
-    return score;
-}
+        return score;
+    }
 }
