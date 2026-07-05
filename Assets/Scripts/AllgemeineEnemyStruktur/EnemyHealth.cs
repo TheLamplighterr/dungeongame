@@ -36,6 +36,11 @@ public class EnemyHealth : MonoBehaviour
     private Color originalColor;
     private bool isDead;
 
+    [Header("Death Animation")]
+    public Animator animator;
+    public string deathAnimation = "";
+    public float deathAnimationLength = 2f;
+
     void Start()
     {
         currentHealth = maxHealth;
@@ -145,28 +150,43 @@ public class EnemyHealth : MonoBehaviour
     }
 
     void Die()
+{
+    isDead = true;
+
+    RunStatsManager.Instance.AddKill();
+
+    SpawnDeathEffect();
+
+    if (TryGetComponent(out Collider col))
+        col.enabled = false;
+
+    if (TryGetComponent(out Rigidbody rb))
+        rb.isKinematic = true;
+
+    if (TryGetComponent(out UnityEngine.AI.NavMeshAgent agent))
+        agent.isStopped = true;
+
+    // KI deaktivieren
+    MonoBehaviour ai = GetComponent<BaseEnemyAI>();
+    if (ai != null)
+        ai.enabled = false;
+
+    if (animator != null && !string.IsNullOrEmpty(deathAnimation))
     {
-        isDead = true;
+        animator.CrossFade(deathAnimation, 0.1f);
 
-        RunStatsManager.Instance.AddKill();
-
-        SpawnDeathEffect();
-
-        // disable visuals + interaction
-        if (TryGetComponent(out Collider col))
-            col.enabled = false;
-
-        if (TryGetComponent(out Rigidbody rb))
-            rb.isKinematic = true;
-
-        if (TryGetComponent(out UnityEngine.AI.NavMeshAgent agent))
-            agent.isStopped = true;
-
+        // Renderer NICHT sofort ausschalten!
+        Destroy(gameObject, deathAnimationLength);
+    }
+    else
+    {
+        // Gegner ohne Todesanimation
         foreach (var r in GetComponentsInChildren<Renderer>())
             r.enabled = false;
 
         Destroy(gameObject, 2f);
     }
+}
 
     void SpawnDeathEffect()
     {
