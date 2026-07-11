@@ -27,7 +27,7 @@ public class InventorySlotUI : MonoBehaviour
 
         iconImage.enabled = true;
         iconImage.sprite = currentItem.icon;
-    }
+        iconImage.color = new Color(1.2f, 1.2f, 1.2f, 1f);    }
 
     // =========================
     // USE ITEM
