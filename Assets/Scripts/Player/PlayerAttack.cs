@@ -9,6 +9,19 @@ public class PlayerAttack : MonoBehaviour
     public LayerMask enemyLayer;
     public float attackCooldown = 1f;
 
+    [Header("Light Attack")]
+    public float lightAttackRange = 3f;
+    public int lightDamage = 25;
+    public float lightCooldown = 0.7f;
+
+    [Header("Heavy Attack")]
+    public float heavyAttackRange = 4f;
+    public int heavyDamage = 50;
+    public float heavyCooldown = 1.8f;
+
+    private bool canLightAttack = true;
+    private bool canHeavyAttack = true;
+
     public bool canAttack = true;
 
     // ===== Damage Boost =====

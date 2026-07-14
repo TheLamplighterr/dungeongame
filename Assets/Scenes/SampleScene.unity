@@ -5700,6 +5700,33 @@ RectTransform:
   m_AnchoredPosition: {x: -50, y: 51}
   m_SizeDelta: {x: 200, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &279495089 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 1ab6dda72ca3769458d31c0f122a2f91, type: 3}
+  m_PrefabInstance: {fileID: 740150173}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &279495091
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 279495089}
+  m_Enabled: 1
+  m_Avatar: {fileID: 9000000, guid: 1ab6dda72ca3769458d31c0f122a2f91, type: 3}
+  m_Controller: {fileID: 9100000, guid: e3c1a0fbaa74be14b832189fc9c4c298, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -12848,6 +12875,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 1ab6dda72ca3769458d31c0f122a2f91, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.29
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1ab6dda72ca3769458d31c0f122a2f91, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.29
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1ab6dda72ca3769458d31c0f122a2f91, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.29
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1ab6dda72ca3769458d31c0f122a2f91, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.8371413
       objectReference: {fileID: 0}
@@ -12887,6 +12926,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1ab6dda72ca3769458d31c0f122a2f91, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 1ab6dda72ca3769458d31c0f122a2f91, type: 3}
       propertyPath: m_Name
       value: TeresaAttempt4 (2)
@@ -12894,7 +12937,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1ab6dda72ca3769458d31c0f122a2f91, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 279495091}
   m_SourcePrefab: {fileID: 100100000, guid: 1ab6dda72ca3769458d31c0f122a2f91, type: 3}
 --- !u!1 &744295639
 GameObject:
@@ -15570,6 +15616,12 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   attackCooldown: 0.6
+  lightAttackRange: 3
+  lightDamage: 25
+  lightCooldown: 0.7
+  heavyAttackRange: 4
+  heavyDamage: 50
+  heavyCooldown: 1.8
   canAttack: 1
   damageBoostVFX: {fileID: 185793831}
 --- !u!114 &1644528368
