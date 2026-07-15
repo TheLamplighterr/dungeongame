@@ -49,7 +49,7 @@ public class InventoryUI : MonoBehaviour
 
         // PLAYER LOCK
         playerMovement.canMove = false;
-        playerAttack.canAttack = false;
+        playerAttack.DisableCombat();
 
         // GAME PAUSE (optional aber stabil)
         Time.timeScale = 0f;
@@ -66,7 +66,7 @@ public class InventoryUI : MonoBehaviour
 
         // PLAYER UNLOCK
         playerMovement.canMove = true;
-        playerAttack.canAttack = true;
+        playerAttack.EnableCombat();
 
         Time.timeScale = 1f;
 
