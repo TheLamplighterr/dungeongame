@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic; // Ermöglicht die Nutzung von Listen
 
 public class InventoryUI : MonoBehaviour
 {
@@ -14,6 +15,10 @@ public class InventoryUI : MonoBehaviour
 
     [Header("UI")]
     public GameObject inventoryPanel;
+
+    [Header("Gameplay UI zum Ausblenden")]
+    [Tooltip("Ziehe hier die UI-Elemente rein, die beim Öffnen des Inventars verschwinden und beim Schließen wiederkommen sollen")]
+    [SerializeField] private List<GameObject> gameplayUIElementsToHide = new List<GameObject>();
 
     [Header("State")]
     private bool isOpen = false;
@@ -38,7 +43,6 @@ public class InventoryUI : MonoBehaviour
 
     void Update()
     {
-    
         UpdateUI();
     }
 
@@ -46,6 +50,9 @@ public class InventoryUI : MonoBehaviour
     {
         isOpen = true;
         inventoryPanel.SetActive(true);
+
+        // --- NEU: Gameplay-UI ausblenden ---
+        ToggleGameplayUI(false);
 
         // PLAYER LOCK
         playerMovement.canMove = false;
@@ -64,6 +71,9 @@ public class InventoryUI : MonoBehaviour
         isOpen = false;
         inventoryPanel.SetActive(false);
 
+        // --- NEU: Gameplay-UI wieder einblenden ---
+        ToggleGameplayUI(true);
+
         // PLAYER UNLOCK
         playerMovement.canMove = true;
         playerAttack.EnableCombat();
@@ -72,6 +82,18 @@ public class InventoryUI : MonoBehaviour
 
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+    }
+
+    // Hilfsmethode, um die UI-Elemente an- oder auszuschalten
+    private void ToggleGameplayUI(bool show)
+    {
+        foreach (GameObject uiElement in gameplayUIElementsToHide)
+        {
+            if (uiElement != null)
+            {
+                uiElement.SetActive(show);
+            }
+        }
     }
 
     void CreateUI()
@@ -100,47 +122,45 @@ public class InventoryUI : MonoBehaviour
         UpdateUI();
     }
 
-
-public LayerMask groundMask;
+    public LayerMask groundMask;
 
     public void DropItem(int index)
-{
-    if (inventory.items[index] == null)
-        return;
-
-    ItemData item = inventory.items[index];
-
-    if (item.worldPrefab == null)
     {
-        Debug.LogWarning("Kein WorldPrefab für: " + item.itemName);
-        return;
+        if (inventory.items[index] == null)
+            return;
+
+        ItemData item = inventory.items[index];
+
+        if (item.worldPrefab == null)
+        {
+            Debug.LogWarning("Kein WorldPrefab für: " + item.itemName);
+            return;
+        }
+
+        if (dropPoint == null)
+        {
+            Debug.LogError("DropPoint nicht gesetzt!");
+            return;
+        }
+
+        // Spawn Position leicht über Boden
+        Vector3 spawnPos = dropPoint.position + Vector3.up * dropHeightOffset;
+
+        Instantiate(item.worldPrefab, spawnPos, Quaternion.identity);
+
+        inventory.RemoveItem(index);
+        UpdateUI();
     }
 
-    if (dropPoint == null)
+    public void Open()
     {
-        Debug.LogError("DropPoint nicht gesetzt!");
-        return;
+        if (!isOpen)
+            OpenInventory();
     }
 
-    //  Spawn Position leicht über Boden
-    Vector3 spawnPos = dropPoint.position + Vector3.up * dropHeightOffset;
-
-    Instantiate(item.worldPrefab, spawnPos, Quaternion.identity);
-
-    inventory.RemoveItem(index);
-    UpdateUI();
-}
-
-public void Open()
-{
-    if (!isOpen)
-        OpenInventory();
-}
-
-public void Close()
-{
-    if (isOpen)
-        CloseInventory();
-}
-
+    public void Close()
+    {
+        if (isOpen)
+            CloseInventory();
+    }
 }

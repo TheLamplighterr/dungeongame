@@ -19926,6 +19926,12 @@ MonoBehaviour:
   playerAttack: {fileID: 1644528367}
   playerHealth: {fileID: 1644528366}
   inventoryPanel: {fileID: 713553382}
+  gameplayUIElementsToHide:
+  - {fileID: 1142132473}
+  - {fileID: 1809426404}
+  - {fileID: 940532166}
+  - {fileID: 405422665}
+  - {fileID: 655115743}
   dropPoint: {fileID: 1957445203}
   dropHeightOffset: 0.5
   player: {fileID: 1644528358}
