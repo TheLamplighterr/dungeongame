@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic; // Ermöglicht die Nutzung von Listen
 
 public class PauseMenuUI : MonoBehaviour
 {
@@ -10,6 +11,10 @@ public class PauseMenuUI : MonoBehaviour
 
     public CanvasGroup pauseGroup;
     public CanvasGroup optionsGroup;
+
+    [Header("Gameplay UI zum Ausblenden")]
+    [Tooltip("Ziehe hier die UI-Elemente rein, die beim Pausieren verschwinden und beim Fortsetzen wiederkommen sollen")]
+    [SerializeField] private List<GameObject> gameplayUIElementsToHide = new List<GameObject>();
 
     [Header("Fade")]
     public float fadeSpeed = 6f;
@@ -31,15 +36,36 @@ public class PauseMenuUI : MonoBehaviour
     }
 
     void Update()
-{   
+    { 
         
-}
+    }
 
     public void PauseGame()
     {
         pausePanel.SetActive(true);
+        optionsPanel.SetActive(false); 
         Time.timeScale = 0f;
         isPaused = true;
+
+        // --- NEU: Gameplay-UI ausblenden ---
+        ToggleGameplayUI(false);
+
+        // Kampf deaktivieren & Mauszeiger freigeben
+        PlayerAttack playerAttack = FindFirstObjectByType<PlayerAttack>();
+        if (playerAttack != null)
+        {
+            playerAttack.DisableCombat();
+        }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        // CanvasGroup Interaktion erzwingen
+        if (pauseGroup != null)
+        {
+            pauseGroup.interactable = true;
+            pauseGroup.blocksRaycasts = true;
+        }
 
         StartFade(pauseGroup, 1f);
     }
@@ -53,6 +79,19 @@ public class PauseMenuUI : MonoBehaviour
     {
         StartFade(pauseGroup, 0f);
 
+        // --- NEU: Gameplay-UI wieder einblenden ---
+        ToggleGameplayUI(true);
+
+        // Kampf wieder erlauben & Mauszeiger sperren
+        PlayerAttack playerAttack = FindFirstObjectByType<PlayerAttack>();
+        if (playerAttack != null)
+        {
+            playerAttack.EnableCombat();
+        }
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
         yield return new WaitForSecondsRealtime(0.2f);
 
         pausePanel.SetActive(false);
@@ -60,6 +99,18 @@ public class PauseMenuUI : MonoBehaviour
 
         Time.timeScale = 1f;
         isPaused = false;
+    }
+
+    // Hilfsmethode, um die Gameplay-UI flexibel an- oder auszuschalten
+    private void ToggleGameplayUI(bool show)
+    {
+        foreach (GameObject uiElement in gameplayUIElementsToHide)
+        {
+            if (uiElement != null)
+            {
+                uiElement.SetActive(show);
+            }
+        }
     }
 
     //  OPTIONS
@@ -121,12 +172,12 @@ public class PauseMenuUI : MonoBehaviour
     }
 
     public void OpenPause()
-{
-    PauseGame();
-}
+    {
+        PauseGame();
+    }
 
-public void ClosePause()
-{
-    ResumeGame();
-}
+    public void ClosePause()
+    {
+        ResumeGame();
+    }
 }

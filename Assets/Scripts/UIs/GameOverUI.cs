@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic; // Ermöglicht die Nutzung von Listen
 
 public class GameOverUI : MonoBehaviour
 {
@@ -10,6 +11,10 @@ public class GameOverUI : MonoBehaviour
     public CanvasGroup canvasGroup;
     public RectTransform titleText;
     public CanvasGroup buttonsGroup;
+
+    [Header("Gameplay UI zum Ausblenden")]
+    [Tooltip("Ziehe hier alle UI-Elemente rein, die beim GameOver verschwinden sollen (z.B. Action-Icons, Boss-HP-Bar, Standard-HUD)")]
+    [SerializeField] private List<GameObject> gameplayUIElementsToHide = new List<GameObject>();
 
     [Header("Fade Settings")]
     public float fadeDuration = 1.2f;
@@ -41,9 +46,9 @@ public class GameOverUI : MonoBehaviour
 
         if (runStatsGroup != null)
         {
-        runStatsGroup.alpha = 0f;
-        runStatsGroup.interactable = false;
-        runStatsGroup.blocksRaycasts = false;
+            runStatsGroup.alpha = 0f;
+            runStatsGroup.interactable = false;
+            runStatsGroup.blocksRaycasts = false;
         }
 
         if (titleText != null)
@@ -59,8 +64,34 @@ public class GameOverUI : MonoBehaviour
 
     public void ShowGameOver()
     {
+        // --- NEU: GAMEPLAY-UI AUSBLENDEN ---
+        HideGameplayUI();
+
+        // Deaktiviert den Kampf auf dem Spieler, damit Klicks nicht mehr als Angriff gewertet werden
+        PlayerAttack playerAttack = FindFirstObjectByType<PlayerAttack>();
+        if (playerAttack != null)
+        {
+            playerAttack.DisableCombat();
+        }
+
+        // Schaltet den Mauszeiger wieder frei, damit man die UI-Buttons anklicken kann
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         gameOverPanel.SetActive(true);
         StartCoroutine(FadeIn());
+    }
+
+    // Hilfsmethode, um alle registrierten UI-Elemente sauber abzuschalten
+    private void HideGameplayUI()
+    {
+        foreach (GameObject uiElement in gameplayUIElementsToHide)
+        {
+            if (uiElement != null)
+            {
+                uiElement.SetActive(false);
+            }
+        }
     }
 
     IEnumerator FadeIn()
@@ -133,35 +164,43 @@ public class GameOverUI : MonoBehaviour
     }
 
     public void OpenRunStats()
-{
-    gameOverPanel.SetActive(false);
-
-    runStatsPanel.SetActive(true);
-
-    runStatsUI.UpdateStats(); 
-
-    if (runStatsGroup != null)
     {
-        runStatsGroup.alpha = 1f;
-        runStatsGroup.interactable = true;
-        runStatsGroup.blocksRaycasts = true;
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
+
+        if (runStatsPanel != null)
+        {
+            runStatsPanel.SetActive(true);
+        }
+
+        if (runStatsUI != null)
+        {
+            runStatsUI.UpdateStats(); 
+        }
+
+        if (runStatsGroup != null)
+        {
+            runStatsGroup.alpha = 1f;
+            runStatsGroup.interactable = true;
+            runStatsGroup.blocksRaycasts = true;
+        }
     }
-}
 
     public void CloseRunStats()
-{
-    runStatsPanel.SetActive(false);
-    gameOverPanel.SetActive(true);
-
-    if (runStatsGroup != null)
     {
-        runStatsGroup.alpha = 0f;
-        runStatsGroup.interactable = false;
-        runStatsGroup.blocksRaycasts = false;
-    }
+        if (runStatsPanel != null)
+        {
+            runStatsPanel.SetActive(false);
+        }
 
-    canvasGroup.alpha = 1f;
-    canvasGroup.interactable = true;
-    canvasGroup.blocksRaycasts = true;
-}
+        if (runStatsGroup != null)
+        {
+            runStatsGroup.alpha = 0f;
+            runStatsGroup.interactable = false;
+            runStatsGroup.blocksRaycasts = false;
+        }
+
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = true;
+    }
 }
