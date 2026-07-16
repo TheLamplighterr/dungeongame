@@ -6,6 +6,7 @@ public class StoneGolemAI : BaseEnemyAI
     public Animator animator;
 
     private EnemyDamage enemyDamage;
+    private EnemyHealth enemyHealth; // NEU: Referenz auf die eigene Lebenskomponente
 
     [Header("Boss Settings")]
     public float moveSpeed = 2f;
@@ -17,6 +18,7 @@ public class StoneGolemAI : BaseEnemyAI
     public Transform impactPoint;
 
     private bool isAttacking;
+    private bool hasTriggeredBossUI = false; // NEU: Verhindert mehrfaches Triggern
 
     // Speichert die aktuell laufende Animation, um Spamming zu verhindern
     private string currentAnimation = "";
@@ -28,9 +30,38 @@ public class StoneGolemAI : BaseEnemyAI
         // Sucht den Animator im Kind-Objekt (dem Golem-Modell)
         animator = GetComponentInChildren<Animator>();
         enemyDamage = GetComponent<EnemyDamage>();
+        enemyHealth = GetComponent<EnemyHealth>(); // NEU: Holt sich das EnemyHealth-Skript
 
         if (agent != null)
             agent.speed = moveSpeed;
+    }
+
+    // Wir klinken uns in Update ein, um die UI zu aktivieren, sobald der Kampf losgeht
+    protected override void Update()
+    {
+        base.Update();
+
+        // NEU: Sobald der Golem den Spieler sieht (nicht mehr im Idle ist), 
+        // aktivieren wir die Boss-UI auf dem Bildschirm!
+        if (!hasTriggeredBossUI && player != null && agent != null && agent.enabled)
+        {
+            float distance = Vector3.Distance(transform.position, player.position);
+            if (distance <= sightRange)
+            {
+                TriggerBossFightUI();
+            }
+        }
+    }
+
+    // NEU: Aktiviert die Boss-UI über das BossUI-Singleton
+    private void TriggerBossFightUI()
+    {
+        if (BossUI.Instance != null && enemyHealth != null)
+        {
+            BossUI.Instance.StartBossFight(enemyHealth);
+            hasTriggeredBossUI = true;
+            Debug.Log($"[BOSS-AI] Bosskampf-UI für {gameObject.name} erfolgreich gestartet!");
+        }
     }
 
     protected override void Idle()

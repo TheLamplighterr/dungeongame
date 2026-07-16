@@ -1,141 +1,142 @@
-using UnityEngine;
 using System.Collections;
-using Unity.Cinemachine; // Wichtig für Cinemachine v3
+using UnityEngine;
 
 public class PlayerAttack : MonoBehaviour
 {
-    [Header("Animator")]
-    public Animator animator;
+    [Header("Angriffs-Einstellungen")]
+    [SerializeField] private int lightAttackDamage = 20;
+    [SerializeField] private float lightAttackRange = 2f;
+    [SerializeField] private float attackCooldown = 0.5f;
 
-    [Header("Enemy")]
-    public LayerMask enemyLayer;
+    [Header("Zielen & Kameras (Cinemachine)")]
+    [SerializeField] private GameObject aimCamera;
+    [SerializeField] private GameObject thirdPersonCamera;
+    [SerializeField] private GameObject crosshairUI;
 
-    [Header("Light Attack")]
-    public float lightAttackRange = 3f;
-    public int lightDamage = 25;
-    public float lightCooldown = 0.7f;
+    [Header("Animationen")]
+    [SerializeField] private Animator animator;
 
-    [Header("Heavy Attack")]
-    public float heavyAttackRange = 4f;
-    public int heavyDamage = 50;
-    public float heavyCooldown = 1.5f;
+    private bool canAttack = true;
+    private bool isAiming = false;
+    private bool isCombatDisabled = false; // Steuert, ob der Spieler generell angreifen darf
 
-    [Header("VFX")]
-    public ParticleSystem damageBoostVFX;
+    // Temporäre Schadensmodifikatoren
+    private int originalLightAttackDamage;
 
-    [Header("Aim Camera System")]
-    public CinemachineCamera normalCamera; 
-    public CinemachineCamera aimCamera;   
-    public float holdThreshold = 0.35f;    
+    void Awake()
+    {
+        // Wir merken uns den Standard-Schaden für den Fall eines Boost-Resets
+        originalLightAttackDamage = lightAttackDamage;
+    }
 
-    [Header("UI Elemente")]
-    public GameObject crosshairUI; // ZIEHE HIER DEIN FADENKREUZ-IMAGE REIN!
+    // --- NEU/PROPERTIES FÜR ANDERE SKRIPTE ---
+    
+    /// <summary>
+    /// Erhöht den Schaden für eine bestimmte Dauer.
+    /// Wird von InventorySlotUI aufgerufen (z.B. beim Trinken eines Stärketranks).
+    /// </summary>
+    /// <param name="boostAmount">Wie viel Schaden addiert wird.</param>
+    /// <param name="duration">Wie lange der Boost hält (in Sekunden).</param>
+    public void BoostDamage(int boostAmount, float duration)
+    {
+        StartCoroutine(DamageBoostCoroutine(boostAmount, duration));
+    }
 
-    private bool canLightAttack = true;
-    private bool canHeavyAttack = true;
-    private bool controlsEnabled = true;
+    private IEnumerator DamageBoostCoroutine(int boostAmount, float duration)
+    {
+        lightAttackDamage = originalLightAttackDamage + boostAmount;
+        Debug.Log($"[Damage Boost] Schaden um {boostAmount} erhöht! Neuer Schaden: {lightAttackDamage} für {duration} Sekunden.");
 
-    private bool isHolding = false;
-    private bool isAiming = false; 
-    private float holdStartTime;
+        yield return new WaitForSeconds(duration);
 
-    private Coroutine attackBoostRoutine;
-    private int baseLightDamage;
-    private int baseHeavyDamage;
+        lightAttackDamage = originalLightAttackDamage;
+        Debug.Log($"[Damage Boost] Vorbei! Schaden wieder normal: {lightAttackDamage}");
+    }
 
+    /// <summary>
+    /// Gibt zurück, ob der Spieler gerade zielt. 
+    /// Wird von PlayerMovement und PlayerCrosshairUI abgefragt.
+    /// </summary>
     public bool IsAiming()
     {
         return isAiming;
     }
 
-    void Start()
+    /// <summary>
+    /// Deaktiviert den Kampf (wird z.B. vom Inventar aufgerufen).
+    /// </summary>
+    public void DisableCombat()
     {
-        baseLightDamage = lightDamage;
-        baseHeavyDamage = heavyDamage;
-
-        // Sicherheits-Check beim Start: Kameras zurücksetzen und Fadenkreuz aus
-        ResetCameras();
+        isCombatDisabled = true;
+        ResetCameras(); // Falls er beim Öffnen des Inventars gezielt hat, setzen wir das zurück
     }
+
+    /// <summary>
+    /// Aktiviert den Kampf wieder (wird beim Schließen des Inventars aufgerufen).
+    /// </summary>
+    public void EnableCombat()
+    {
+        isCombatDisabled = false;
+    }
+
+    // -----------------------------------------
 
     void Update()
     {
+        // Wenn der Kampf komplett deaktiviert ist (z.B. Inventar offen), blockieren wir jeglichen Input
+        if (isCombatDisabled) return;
+
         HandleInput();
     }
 
     void HandleInput()
     {
-        if (!controlsEnabled)
-            return;
-
-        // 1. Linksklick drücken
-        if (Input.GetMouseButtonDown(0))
+        // Rechtsklick halten zum Zielen (für Trankwurf)
+        if (Input.GetMouseButtonDown(1))
         {
-            holdStartTime = Time.time;
-            isHolding = true;
+            StartAiming();
         }
-
-        // 2. Linksklick halten -> Aim-Modus aktivieren
-        if (isHolding && Input.GetMouseButton(0))
-        {
-            if (!isAiming && (Time.time - holdStartTime >= holdThreshold))
-            {
-                EnterAimMode();
-            }
-        }
-
-        // 3. Linksklick loslassen
-        if (Input.GetMouseButtonUp(0))
+        if (Input.GetMouseButtonUp(1))
         {
             if (isAiming)
             {
-                ThrowPotion(); 
+                ThrowPotion();
             }
-            else if (canLightAttack)
-            {
-                StartCoroutine(LightAttack()); 
-            }
-
-            isHolding = false;
         }
 
-        // 4. Heavy Attack (Rechtsklick)
-        if (Input.GetMouseButtonDown(1))
+        // LICHTER ANGRIFF: Reagiert jetzt auf Linksklick ODER Taste R!
+        if ((Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.R)) && canAttack && !isAiming)
         {
-            if (canHeavyAttack && !isAiming) 
-            {
-                StartCoroutine(HeavyAttack());
-            }
+            StartCoroutine(PerformLightAttack());
         }
     }
 
-    //--------------------------------------------------
-    // AIM MODUS (KAMERA-WECHSEL & FADENKREUZ)
-    //--------------------------------------------------
-    void EnterAimMode()
+    void StartAiming()
     {
         isAiming = true;
-        Debug.Log("Aim Mode Aktiviert!");
-
-        if (animator != null)
-            animator.SetBool("Aim", true);
-
-        // Kameras umschalten
-        if (normalCamera != null) normalCamera.Priority = 0;
-        if (aimCamera != null) aimCamera.Priority = 20;
-
-        // Fadenkreuz anzeigen!
-        if (crosshairUI != null)
-            crosshairUI.SetActive(true);
+        if (aimCamera != null) aimCamera.SetActive(true);
+        if (thirdPersonCamera != null) thirdPersonCamera.SetActive(false);
+        if (crosshairUI != null) crosshairUI.SetActive(true);
+        if (animator != null) animator.SetBool("Aim", true);
     }
 
     void ThrowPotion()
     {
-        Debug.Log("Trank geworfen!");
-
         if (animator != null)
         {
             animator.SetBool("Aim", false);
             animator.SetTrigger("Throw");
+        }
+
+        // Trank werfen über das separate PotionThrower-Skript
+        PotionThrower thrower = GetComponent<PotionThrower>();
+        if (thrower != null)
+        {
+            thrower.Throw();
+        }
+        else
+        {
+            Debug.LogWarning("PlayerAttack: PotionThrower-Komponente auf dem Spieler nicht gefunden!");
         }
 
         ResetCameras();
@@ -144,69 +145,62 @@ public class PlayerAttack : MonoBehaviour
     void ResetCameras()
     {
         isAiming = false;
-
-        if (normalCamera != null) normalCamera.Priority = 20;
-        if (aimCamera != null) aimCamera.Priority = 0;
-
-        // Fadenkreuz verstecken!
-        if (crosshairUI != null)
-            crosshairUI.SetActive(false);
+        if (aimCamera != null) aimCamera.SetActive(false);
+        if (thirdPersonCamera != null) thirdPersonCamera.SetActive(true);
+        if (crosshairUI != null) crosshairUI.SetActive(false);
     }
 
-    //--------------------------------------------------
-    // NORMAL ATTACKS (COOLDOWNS)
-    //--------------------------------------------------
-    IEnumerator LightAttack()
+    IEnumerator PerformLightAttack()
     {
-        canLightAttack = false;
-        if (animator != null) animator.SetTrigger("LightAttack");
-        yield return new WaitForSeconds(lightCooldown);
-        canLightAttack = true;
+        canAttack = false;
+
+        // Trigger die Angriffs-Animation im Animator
+        if (animator != null)
+        {
+            animator.SetTrigger("LightAttack");
+        }
+
+        // Schaden austeilen
+        DealMeleeDamage(lightAttackRange, lightAttackDamage);
+
+        yield return new WaitForSeconds(attackCooldown);
+        canAttack = true;
     }
 
-    IEnumerator HeavyAttack()
-    {
-        canHeavyAttack = false;
-        if (animator != null) animator.SetTrigger("HeavyAttack");
-        yield return new WaitForSeconds(heavyCooldown);
-        canHeavyAttack = true;
-    }
-
-    public void LightAttackHit() { PerformAttack(lightAttackRange, lightDamage); }
-    public void HeavyAttackHit() { PerformAttack(heavyAttackRange, heavyDamage); }
-
-    void PerformAttack(float range, int damage)
+    /// <summary>
+    /// Sucht im Angriffsradius nach Gegnern und fügt ihnen Schaden zu.
+    /// </summary>
+    void DealMeleeDamage(float range, int damage)
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, range);
+        
         foreach (Collider hit in hits)
         {
-            EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
-            if (enemy != null) enemy.TakeDamage(damage);
+            if (hit.gameObject == gameObject) continue;
+
+            EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
+
+            if (enemy == null)
+            {
+                enemy = hit.GetComponentInParent<EnemyHealth>();
+            }
+
+            if (enemy == null)
+            {
+                enemy = hit.GetComponentInChildren<EnemyHealth>();
+            }
+
+            if (enemy != null)
+            {
+                enemy.TakeDamage(damage);
+                Debug.Log($"[Nahkampf] {hit.name} erfolgreich getroffen! {damage} Schaden verursacht.");
+            }
         }
     }
 
-    public void BoostDamage(int bonus, float duration)
-    {
-        if (attackBoostRoutine != null) StopCoroutine(attackBoostRoutine);
-        attackBoostRoutine = StartCoroutine(DamageBoostRoutine(bonus, duration));
-    }
-
-    IEnumerator DamageBoostRoutine(int bonus, float duration)
-    {
-        lightDamage = baseLightDamage + bonus; heavyDamage = baseHeavyDamage + bonus;
-        if (damageBoostVFX != null) damageBoostVFX.Play();
-        yield return new WaitForSeconds(duration);
-        lightDamage = baseLightDamage; heavyDamage = baseHeavyDamage;
-        if (damageBoostVFX != null) damageBoostVFX.Stop();
-        attackBoostRoutine = null;
-    }
-
-    public void EnableCombat() { controlsEnabled = true; }
-    public void DisableCombat() { ResetCameras(); controlsEnabled = false; }
-
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.yellow; Gizmos.DrawWireSphere(transform.position, lightAttackRange);
-        Gizmos.color = Color.red; Gizmos.DrawWireSphere(transform.position, heavyAttackRange);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, lightAttackRange);
     }
 }

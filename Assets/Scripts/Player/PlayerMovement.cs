@@ -3,10 +3,19 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Bewegung")]
+    [Header("Bewegung (Normal)")]
     [SerializeField] private float walkSpeed = 5f;
+    [SerializeField] private float sprintSpeed = 8.5f; // NEU: Sprintgeschwindigkeit
     [SerializeField] private float gravity = -9.81f;
     
+    [Header("Springen")]
+    [SerializeField] private float jumpHeight = 1.5f; // NEU: Sprunghöhe
+    [SerializeField] private KeyCode jumpKey = KeyCode.Space; // NEU: Sprungtaste
+    [SerializeField] private KeyCode sprintKey = KeyCode.LeftShift; // NEU: Sprinttaste
+
+    [Header("VFX (Speed Lines)")]
+    [SerializeField] private ParticleSystem speedLinesParticles; // NEU: Hier das Partikelsystem im Inspector reinziehen
+
     // Vom Inventar-Skript gesucht: Bestimmt, ob sich der Spieler bewegen darf
     [HideInInspector] public bool canMove = true; 
 
@@ -17,14 +26,14 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float aimSensitivity = 2f; // Maus-Sensibilität beim Zielen
 
     private CharacterController controller;
-    private PlayerAttack playerAttack; // GEÄNDERT: Nutzt jetzt direkt das Attack-Skript für den Aim-Status!
+    private PlayerAttack playerAttack; 
     private Transform mainCameraTransform;
     private Vector3 velocity;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
-        playerAttack = GetComponent<PlayerAttack>(); // GEÄNDERT: Holt sich die PlayerAttack-Komponente
+        playerAttack = GetComponent<PlayerAttack>(); 
         
         if (Camera.main != null)
         {
@@ -34,6 +43,12 @@ public class PlayerMovement : MonoBehaviour
         // Sperrt den Mauszeiger im Spielfenster
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // Sicherheits-Check: Falls das Partikelsystem beim Start läuft, stoppen wir es kurz
+        if (speedLinesParticles != null && speedLinesParticles.isPlaying)
+        {
+            speedLinesParticles.Stop();
+        }
     }
 
     void Update()
@@ -45,6 +60,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         Vector3 moveDirection = Vector3.zero;
+        bool shouldPlayVFX = false; // NEU: Merkt sich, ob wir den EFFEKT zeigen wollen
 
         // 2. Bewegung & Rotation nur ausführen, wenn wir uns bewegen dürfen!
         if (canMove)
@@ -53,15 +69,27 @@ public class PlayerMovement : MonoBehaviour
             float vertical = Input.GetAxisRaw("Vertical");
             Vector3 inputDirection = new Vector3(horizontal, 0f, vertical).normalized;
 
-            // GEÄNDERT: Fragt jetzt direkt die IsAiming()-Funktion aus PlayerAttack ab!
+            // Fragt direkt die IsAiming()-Funktion aus PlayerAttack ab!
             bool isAiming = playerAttack != null && playerAttack.IsAiming();
+
+            // SPRINTEN: Sprinten ist nur aktiv, wenn wir Shift drücken und NICHT zielen
+            bool isSprinting = Input.GetKey(sprintKey) && !isAiming;
+            float currentSpeed = isSprinting ? sprintSpeed : walkSpeed;
+
+            // NEU: Effekt nur aktivieren, wenn wir sprinten UND uns auch wirklich bewegen!
+            if (isSprinting && inputDirection.magnitude >= 0.1f)
+            {
+                shouldPlayVFX = true;
+                
+                // TEST-MELDUNG: Gibt eine Nachricht in deiner Unity-Konsole aus
+                Debug.Log("Sprintschnittstelle AKTIV: Partikel sollten starten!");
+            }
 
             if (isAiming)
             {
                 // --- GENSHIN AIM MODE MOVEMENT (STRAFING) ---
                 if (mainCameraTransform != null)
                 {
-                    // Wir holen uns die Vorwärts- und Rechts-Vektoren der Kamera
                     Vector3 camForward = mainCameraTransform.forward;
                     camForward.y = 0;
                     camForward.Normalize();
@@ -70,10 +98,9 @@ public class PlayerMovement : MonoBehaviour
                     camRight.y = 0;
                     camRight.Normalize();
 
-                    // Wichtig: Die Bewegung wird relativ zur Kamera aufgeteilt.
                     moveDirection = (camForward * vertical + camRight * horizontal).normalized;
                     
-                    // Der Charakter bewegt sich starr in diese Richtung
+                    // Der Charakter bewegt sich starr in diese Richtung (immer im normalen Gehtempo für präzises Zielen)
                     controller.Move(moveDirection * walkSpeed * Time.deltaTime);
                 }
             }
@@ -91,37 +118,67 @@ public class PlayerMovement : MonoBehaviour
                     camRight.Normalize();
 
                     moveDirection = camForward * inputDirection.z + camRight * inputDirection.x;
-                    controller.Move(moveDirection * walkSpeed * Time.deltaTime);
+                    controller.Move(moveDirection * currentSpeed * Time.deltaTime);
                 }
             }
 
-            // Rotation steuern (wichtig: wird auch aufgerufen, wenn WSAD nicht gedrückt ist!)
+            // --- SPRINGEN (NEU) ---
+            // Nur springen, wenn wir auf dem Boden stehen und die Taste drücken
+            if (Input.GetKeyDown(jumpKey) && controller.isGrounded)
+            {
+                // Physikalische Formel für Sprunghöhe: v = sqrt(h * -2 * g)
+                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            }
+
+            // Rotation steuern
             HandleRotation(moveDirection);
         }
+
+        // NEU: Partikeleffekt basierend auf der Bewegung steuern (mit Null-Check, um Fehler zu vermeiden)
+        HandleSpeedLinesVFX(shouldPlayVFX);
 
         // 3. Schwerkraft physikalisch anwenden
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
     }
 
+    // NEU: Eigene Methode zur sauberen Steuerung des Partikelsystems
+    private void HandleSpeedLinesVFX(bool play)
+    {
+        if (speedLinesParticles == null) return; // Abbrechen, falls kein Partikelsystem zugewiesen wurde
+
+        if (play)
+        {
+            if (!speedLinesParticles.isPlaying)
+            {
+                speedLinesParticles.Play();
+            }
+        }
+        else
+        {
+            if (speedLinesParticles.isPlaying)
+            {
+                speedLinesParticles.Stop();
+            }
+        }
+    }
+
     private void HandleRotation(Vector3 moveDirection)
     {
-        // GEÄNDERT: Auch hier die Abfrage auf PlayerAttack umgestellt!
         bool isAiming = playerAttack != null && playerAttack.IsAiming();
 
         if (isAiming)
         {
             // --- ZIELEN-ROTATION (GENSHIN STYLE) ---
-            // 1. Die Maus dreht den Spieler-Körper direkt um die Y-Achse (links/rechts).
+            // Die Maus dreht den Spieler-Körper direkt um die Y-Achse (links/rechts).
             float mouseX = Input.GetAxis("Mouse X") * aimSensitivity;
             transform.Rotate(Vector3.up * mouseX);
 
-            // 2. Sicherheits-Check: Wir stellen sicher, dass der Charakter absolut 
-            // synchron mit dem Kamera-Forward-Vektor schaut.
+            // Sicherheits-Check: Absolut synchron mit dem Kamera-Forward-Vektor schauen
             if (mainCameraTransform != null)
             {
                 Vector3 cameraForward = mainCameraTransform.forward;
-                cameraForward.y = 0f; // Verhindert, dass der Charakter nach oben/unten wegkippt
+                cameraForward.y = 0f; 
                 if (cameraForward.sqrMagnitude > 0.001f)
                 {
                     transform.rotation = Quaternion.LookRotation(cameraForward);
@@ -131,7 +188,7 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             // --- NORMALE ROTATION ---
-            // Charakter dreht sich weich in die Richtung, in die er läuft (moveDirection)
+            // Wenn wir uns bewegen, drehen wir uns weich in die Laufrichtung
             if (moveDirection.magnitude >= 0.1f)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(moveDirection);

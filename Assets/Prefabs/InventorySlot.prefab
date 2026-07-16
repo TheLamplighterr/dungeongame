@@ -67,7 +67,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 0}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -166,6 +166,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventorySlotUI
   iconImage: {fileID: 742351606314125924}
+  inventoryUI: {fileID: 0}
+  slotIndex: 0
 --- !u!114 &7887054679689460654
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4405133741599901261}
   - component: {fileID: -8513112731118711226}
+  - component: {fileID: 6557771429022761819}
+  - component: {fileID: 4321845748322636927}
   m_Layer: 0
   m_Name: Potion_Purple
   m_TagString: Untagged
@@ -62,6 +64,46 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!135 &6557771429022761819
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7859597006823311159}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.16
+  m_Center: {x: 0, y: 0.14, z: 0}
+--- !u!114 &4321845748322636927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7859597006823311159}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab58f4a7fdb11734f99c54a529f135cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PotionProjectile
+  impactVFXPrefab: {fileID: 8866987181904549775, guid: 8c8d8385f96bd054a88a3df780d77bcc, type: 3}
+  potionDamage: 30
+  explosionRadius: 3.5
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  lifetime: 5
 --- !u!1001 &960596529106389305
 PrefabInstance:
   m_ObjectHideFlags: 0

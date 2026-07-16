@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: HealthItem
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Heal
-  icon: {fileID: 21300000, guid: 907b479847733014ab085dde25847da4, type: 3}
+  icon: {fileID: -8702173501659278061, guid: 8637238347ea8cf4b9c4bea5df5eaa24, type: 3}
   description: 
   itemType: 0
   value: 25
