@@ -19113,7 +19113,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!64 &969292698
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -19954,7 +19954,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1278309979
 Transform:
   m_ObjectHideFlags: 0
@@ -22021,8 +22021,8 @@ MonoBehaviour:
   Quadtree: {fileID: 1673605469}
   spawnField: 0000000000000000
   spawnRoomCount: 1
-  poiCount: 2
-  treasureRoomCount: 1
+  poiCount: 5
+  treasureRoomCount: 3
   bossRoomCount: 1
 --- !u!114 &1673605468
 MonoBehaviour:
@@ -22048,7 +22048,6 @@ MonoBehaviour:
   - {fileID: 3893786758261240916, guid: a4da622d0f636b840a1a931ad4362a1b, type: 3}
   - {fileID: 6112867442493774028, guid: 9aa260f0fe1404c4e84c2f2e912ce17d, type: 3}
   bossRooms:
-  - {fileID: 6478441314501868828, guid: a41603ce15f3abf4ea4c629e23873d37, type: 3}
   - {fileID: 5513460199041283800, guid: a6bb0e8836e01314ab9264b5dfbf6cc3, type: 3}
   stairsRoom:
   - {fileID: 4318727135850453802, guid: 20917c64740462844aa37a673db2c9ef, type: 3}
