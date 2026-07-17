@@ -467,7 +467,7 @@ public class MapManager : MonoBehaviour
         {
             if (roomList[i][listRoomType] == bossRoom)
             {
-                bossRoomID = 1;
+                bossRoomID = i;
             }
         }
 
@@ -546,7 +546,7 @@ public class MapManager : MonoBehaviour
 
     }
 
-    int calculateNextMoove(int X1, int Y1, int X2, int Y2, bool restricted, bool try2, int lastdir)
+    int calculateNextMoove(int X1, int Y1, int X2, int Y2, bool restricted, bool try2, int lastdir)     //Moo :p
     {
         int distanceX = X1 - X2;                            
         if(distanceX < 0) distanceX = distanceX * -1;       //get x distance
