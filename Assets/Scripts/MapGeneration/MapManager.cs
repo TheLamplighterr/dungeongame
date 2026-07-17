@@ -207,14 +207,13 @@ public class MapManager : MonoBehaviour
 
         for (int i = 0; i < connections.Count; i++)
         {
-            Console.WriteLine("Verbindung "+ i + ": ");
-            Console.WriteLine("Weight: " + connections[i][0]);
-            Console.WriteLine("ConnectedPoints: " + connections[i][1] + " and " + connections[i][2]);
+            Debug.Log("Verbindung "+ i + ": Weight = <" + connections[i][0] + "> ConnectedPoints: " + connections[i][1] + " and " + connections[i][2]);
         }
 
-        //decideConnections     (MST)
-
         //connect rooms         (try to create a path for each connection)
+
+        createConnectionPaths();
+
 
         //translateToQuadTree   (quadtree leaves mit räumen füllen)
         for (int i = 0; i < roomList.Count; i++) 
@@ -317,7 +316,7 @@ public class MapManager : MonoBehaviour
         temp = y - y2;
         if (temp < 0) { temp = temp * -1; }
         result = result + temp;
-        Console.WriteLine(result);
+        Debug.Log("Calculated <" + result + "> as weight of connection: X"+x + " Y"+y + " and X"+x2 + "Y"+y2);
         return result;
     }
 
@@ -329,13 +328,13 @@ public class MapManager : MonoBehaviour
             if (roomList[i][listRoomType] != bossRoom && roomList[i][listRoomType] != stairsRoom)
             {
                 families.Add(new int[2] { roomList[i][listRoomID], 0 });
-                Console.WriteLine("prepared a point for family");
             }
         }
-    }
+    }       
 
     void prepareConnections()
     {
+        Debug.Log("Preparing MST-Connections");
         prepareFamilies();      //für jeden zu beachtenden Raum wird ein punkt mit Familie und Verweis erstellt
 
         List<int[]> rawConnections = new List<int[]>();
@@ -448,6 +447,265 @@ public class MapManager : MonoBehaviour
             return false;
     }
 
+    /*Connections: weight families[][RoomlistID,familyNR]
+     * connection -> family -> id -> coords
+    */
+    void createConnectionPaths()
+    {
+        for (int i = 0; i < connections.Count; i++) 
+        {
+            createSingleConnectionPath(families[connections[i][1]][0], families[connections[i][2]][0], false);
+        }
+
+        //Bossroom connect
+        //find boss room
+        int bossRoomID = 0;
+        int bossConnectorID = 0;
+        int weightToBeat = 100;
+
+        for (int i = 0;i < roomList.Count; i++)                 
+        {
+            if (roomList[i][listRoomType] == bossRoom)
+            {
+                bossRoomID = 1;
+            }
+        }
+
+        for (int i = 0; i < roomList.Count; i++)
+        {
+            if(roomList[i][listRoomType] == poiRoom || roomList[i][listRoomType] == treasureRoom)
+            {
+                if(calculateWeightFromXY(roomList[bossRoomID][listRoomX], roomList[bossRoomID][listRoomY], roomList[i][listRoomX], roomList[i][listRoomY]) <= weightToBeat)
+                {
+                    bossConnectorID = i;
+                }
+            }
+        }
+        createSingleConnectionPath(bossConnectorID, bossRoomID,true);
+
+        //boss to healroomConnect
+
+    }
+
+    void createSingleConnectionPath(int id1, int id2, bool ignoreRestriction)
+    {
+        int[] point1 = new int[2] { roomList[id1][listRoomX], roomList[id1][listRoomY] };
+        int[] point2 = new int[2] { roomList[id2][listRoomX], roomList[id2][listRoomY] };
+        int[] currentPos = point1;
+
+
+        //int attempt = 0;                        //deadends reached
+        //bool decisionNeeded = false;            //collision detected, multiple options
+        bool deadend = false;                   //temp var to end while
+        bool destination = false;
+        int lastMoove = 0;                      //0=none 1=up 2=right 3=down 4=left
+
+        List<int[]> attempt1 = new List<int[]>();
+        List<int[]> attempt2 = new List<int[]>();
+
+
+        while (deadend == false && destination == false) 
+        {
+            if (currentPos[0] == point2[0] && currentPos[1] == point2[1])
+            {
+                destination = true;
+            }
+            else
+            {
+                int tempdir = calculateNextMoove(point1[0], point1[1], point2[0], point2[1], false, false, lastMoove);
+
+                attempt1.Add(new int[3] { currentPos[0], currentPos[1], tempdir });
+
+                //lastMoove = tempdir;
+
+                if(tempdir == 1)
+                {
+                    currentPos[1]--;
+                }
+                else if (tempdir == 2)
+                {
+                    currentPos[0]++;
+                }
+                else if (tempdir == 3)
+                {
+                    currentPos[1]++;
+                }
+                else if (tempdir == 4)
+                {
+                    currentPos[0]--;
+                }
+            }
+
+        }
+
+        for (int i = 0; i < attempt1.Count; i++) 
+        {
+            applyConnectionPath(attempt1[i][0], attempt1[i][1], attempt1[i][2]);
+        }
+
+
+    }
+
+    int calculateNextMoove(int X1, int Y1, int X2, int Y2, bool restricted, bool try2, int lastdir)
+    {
+        int distanceX = X1 - X2;                            
+        if(distanceX < 0) distanceX = distanceX * -1;       //get x distance
+        int distanceY = Y1 - Y2;
+        if(distanceY < 0)distanceY = distanceY * -1;        //get y distance
+
+        int Xdir = 0;                                       //
+        if(X1 > X2) {  Xdir = -1; }
+        if (X1 < X2) { Xdir = 1; }
+        int Ydir = 0;
+        if(Y1 > Y2) { Ydir = -1; }
+        if (Y1 < Y2) { Ydir = 1; }
+
+        int result = 0;
+
+        if (distanceX > distanceY)
+        {
+            result = 2;
+            if (Xdir == -1)
+            {
+                result = 4;
+            }
+            if (mooveIsValid(X1, Y1, result, restricted))
+            {
+                return result;
+            }
+        }
+        else if(distanceX < distanceY)
+        {
+            result = 3;
+            if (Ydir == -1) 
+            {
+                result = 1;
+            }
+            if (mooveIsValid(X1, Y1, result, restricted))
+            {
+                return result;
+            }
+            
+        }
+
+        if(distanceX == distanceY)
+        {
+            if(try2 == true)
+            {
+                result = 3;
+                if (Ydir == -1)
+                {
+                    result = 1;
+                }
+                if (mooveIsValid(X1, Y1, result, restricted))
+                {
+                    return result;
+                }
+
+            }
+            else
+            {
+                result = 2;
+                if (Xdir == -1)
+                {
+                    result = 4;
+                }
+                if (mooveIsValid(X1, Y1, result, restricted))
+                {
+                    return result;
+                }
+            }
+        }
+
+        if (mooveIsValid(X1, Y1, result, restricted))
+        {
+            return result;
+        }
+        
+
+        return 0;
+    }
+    
+
+    
+
+    bool mooveIsValid(int X, int Y, int dir, bool restricted) 
+    {
+        return true;
+        /*
+        if (dir == 1)
+        {
+            if(Y-1 <= 0) {  return false; }
+            int temp = simpleMap[X][Y - 1][listRoomType];
+            if (temp != stairsRoom)
+            {
+                if (!restricted || temp != bossRoom)
+                    { return true; }
+            }
+        }
+        else if (dir == 2)
+        {
+            if (X + 1 >= maxSpielfeldX) { return false; }
+            int temp = simpleMap[X + 1][Y][listRoomType];
+            if (temp != stairsRoom)
+            {
+                if (!restricted || temp != bossRoom)
+                { return true; }
+            }
+        }
+        else if (dir == 3)
+        {
+            if (Y + 1 >= maxSpielfeldY) { return false; }
+            int temp = simpleMap[X][Y + 1][listRoomType];
+            if (temp != stairsRoom)
+            {
+                if (!restricted || temp != bossRoom)
+                { return true; }
+            }
+        }
+        else if (dir == 4)
+        {
+            if (X - 1 <= 0) { return false; }
+            int temp = simpleMap[X - 1][Y][listRoomType];
+            if (temp != stairsRoom)
+            {
+                if (!restricted || temp != bossRoom)
+                { return true; }
+            }
+        }*/
+            //return false;
+    }
+
+    void applyConnectionPath(int X, int Y, int dir)
+    {
+        if (simpleMap[X][Y][0] == 0)
+        {
+            roomList.Add(new int[4] { connectorRoom, roomList.Count, X, Y });
+            simpleMap[X][Y][0] = connectorRoom;
+        }
+
+        if(dir == 1)
+        {
+            simpleMap[X][Y][1] = 1;
+            simpleMap[X][Y - 1][3] = 1;
+        }
+        else if (dir == 2)
+        {
+            simpleMap[X][Y][2] = 1;
+            simpleMap[X+1][Y][4] = 1;
+        }
+        else if (dir == 3)
+        {
+            simpleMap[X][Y][3] = 1;
+            simpleMap[X][Y+1][1] = 1;
+        }
+        else if (dir == 4)
+        {
+            simpleMap[X][Y][4] = 1;
+            simpleMap[X-1][Y][2] = 1;
+        }
+
+    }
 
     /*
     each point: int family (id compared point) 
