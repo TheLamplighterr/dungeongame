@@ -16,17 +16,28 @@ public class PlayerAttack : MonoBehaviour
     [Header("Animationen")]
     [SerializeField] private Animator animator;
 
+    [Header("Visuelle Effekte")]
+    [Tooltip("Ziehe hier das Partikelsystem für den Schadensboost rein (z.B. ein Leuchten um die Hände oder den Körper)")]
+    [SerializeField] private ParticleSystem damageBoostParticles;
+
     private bool canAttack = true;
     private bool isAiming = false;
     private bool isCombatDisabled = false; // Steuert, ob der Spieler generell angreifen darf
 
     // Temporäre Schadensmodifikatoren
     private int originalLightAttackDamage;
+    private Coroutine currentBoostCoroutine; // Speichert die laufende Coroutine, um sie bei Bedarf sauber zu stoppen
 
     void Awake()
     {
         // Wir merken uns den Standard-Schaden für den Fall eines Boost-Resets
         originalLightAttackDamage = lightAttackDamage;
+
+        // Sicherstellen, dass die Partikel am Anfang aus sind
+        if (damageBoostParticles != null)
+        {
+            damageBoostParticles.Stop();
+        }
     }
 
     // --- NEU/PROPERTIES FÜR ANDERE SKRIPTE ---
@@ -39,7 +50,13 @@ public class PlayerAttack : MonoBehaviour
     /// <param name="duration">Wie lange der Boost hält (in Sekunden).</param>
     public void BoostDamage(int boostAmount, float duration)
     {
-        StartCoroutine(DamageBoostCoroutine(boostAmount, duration));
+        // Falls bereits ein Boost läuft, stoppen wir ihn zuerst, um Überlappungen zu vermeiden
+        if (currentBoostCoroutine != null)
+        {
+            StopCoroutine(currentBoostCoroutine);
+        }
+
+        currentBoostCoroutine = StartCoroutine(DamageBoostCoroutine(boostAmount, duration));
     }
 
     private IEnumerator DamageBoostCoroutine(int boostAmount, float duration)
@@ -47,10 +64,23 @@ public class PlayerAttack : MonoBehaviour
         lightAttackDamage = originalLightAttackDamage + boostAmount;
         Debug.Log($"[Damage Boost] Schaden um {boostAmount} erhöht! Neuer Schaden: {lightAttackDamage} für {duration} Sekunden.");
 
+        // --- NEU: Partikeleffekt starten ---
+        if (damageBoostParticles != null)
+        {
+            damageBoostParticles.Play();
+        }
+
         yield return new WaitForSeconds(duration);
+
+        // --- NEU: Partikeleffekt stoppen ---
+        if (damageBoostParticles != null)
+        {
+            damageBoostParticles.Stop();
+        }
 
         lightAttackDamage = originalLightAttackDamage;
         Debug.Log($"[Damage Boost] Vorbei! Schaden wieder normal: {lightAttackDamage}");
+        currentBoostCoroutine = null;
     }
 
     /// <summary>

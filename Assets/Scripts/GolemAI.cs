@@ -71,7 +71,7 @@ public class StoneGolemAI : BaseEnemyAI
         if (isAttacking || animator == null)
             return;
 
-        // Spielt CrossFade nur ab, wenn wir nicht schon im Idle-Zustand sind
+        // Spielt CrossFade nur ab, wenn nicht schon im Idle-Zustand 
         if (currentAnimation != "Idle")
         {
             currentAnimation = "Idle";
