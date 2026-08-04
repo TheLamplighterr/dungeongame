@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81baf3873f922ad459cf504ddd249dcb, type: 3}
+  m_Name: HealthItem
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemName: Heal Potion
+  icon: {fileID: -8702173501659278061, guid: 8637238347ea8cf4b9c4bea5df5eaa24, type: 3}
+  worldPrefab: {fileID: 1000013846074356, guid: 11e31a2ebb4e6e246bcf8c0ba034a031, type: 3}
+  description: A Potion that gives u a small heal.
+  itemType: 0
+  value: 25
+  useSound: {fileID: 8300000, guid: 673bfb092fceb274386b2a61875698b7, type: 3}
+  equipParticlePrefab: {fileID: 0}

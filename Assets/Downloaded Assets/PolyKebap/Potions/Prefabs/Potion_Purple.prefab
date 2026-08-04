@@ -98,6 +98,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PotionProjectile
   impactVFXPrefab: {fileID: 8866987181904549775, guid: 8c8d8385f96bd054a88a3df780d77bcc, type: 3}
+  impactSound: {fileID: 8300000, guid: 1c4dd8639612b0342ad49871ec7a125f, type: 3}
+  soundVolume: 1
   potionDamage: 30
   explosionRadius: 3.5
   enemyLayer:

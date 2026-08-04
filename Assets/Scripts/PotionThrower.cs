@@ -12,6 +12,10 @@ public class PotionThrower : MonoBehaviour
     [SerializeField] private float throwForce = 15f;
     [SerializeField] private float upwardForce = 2f;
 
+    [Header("Audio (Wurf)")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip throwSound; // Wurf-Swoosh Sound
+
     private Transform mainCameraTransform;
 
     void Start()
@@ -21,37 +25,38 @@ public class PotionThrower : MonoBehaviour
             mainCameraTransform = Camera.main.transform;
         }
 
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
+
         if (potionPrefab == null)
         {
             Debug.LogWarning("PotionThrower: Kein 'potionPrefab' zugewiesen! Der Trank-Wurf wird nicht visuell sichtbar sein.");
         }
     }
 
-    /// <summary>
-    /// Diese Funktion wird von außen aufgerufen, wenn der Wurf ausgeführt wird.
-    /// </summary>
     public void Throw()
     {
         if (potionPrefab == null || mainCameraTransform == null)
             return;
 
-        // Startpunkt festlegen (falls kein Origin zugewiesen ist, nehmen wir die Spielerposition leicht erhöht)
         Vector3 spawnPosition = throwOrigin != null ? throwOrigin.position : transform.position + Vector3.up * 1.5f;
 
-        // Trank instanziieren (erzeugen)
         GameObject activePotion = Instantiate(potionPrefab, spawnPosition, Quaternion.identity);
 
-        // Physik-Komponente holen
+        // --- AUDIO: Wurf-Sound abspielen ---
+        if (audioSource != null && throwSound != null)
+        {
+            audioSource.PlayOneShot(throwSound);
+        }
+
         Rigidbody rb = activePotion.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            // Wir werfen den Trank genau in Blickrichtung der Kamera!
             Vector3 throwDirection = mainCameraTransform.forward;
-            
-            // Kraftvektor berechnen (Kamera-Blickrichtung + leichter Bogen nach oben)
             Vector3 forceToApply = (throwDirection * throwForce) + (Vector3.up * upwardForce);
 
-            // Kraft physikalisch hinzufügen
             rb.AddForce(forceToApply, ForceMode.Impulse);
         }
         else

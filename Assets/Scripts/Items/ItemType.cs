@@ -1,5 +1,8 @@
 public enum ItemType
 {
     Heal,
-    DamageBoost
+    DamageBoost,
+    SuperPotion,
+    ArmorItem,        //höhere HP
+    PermanentDamage   // dauerhaft erhöhter Schaden
 }

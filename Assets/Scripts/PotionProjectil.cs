@@ -6,6 +6,13 @@ public class PotionProjectile : MonoBehaviour
     [Tooltip("Der Partikeleffekt, der beim Aufprall spawnen soll (z. B. eine bunte Explosion).")]
     [SerializeField] private GameObject impactVFXPrefab;
 
+    [Header("Aufprall-Audio")]
+    [Tooltip("Der Sound, der beim Einschlag gespielt wird (z. B. Glasbrechen oder Magie-Explosion).")]
+    [SerializeField] private AudioClip impactSound;
+    [Tooltip("Die Lautstärke des Aufprall-Sounds (0.0 bis 1.0).")]
+    [Range(0f, 1f)]
+    [SerializeField] private float soundVolume = 1f;
+
     [Header("Schadens-Einstellungen")]
     [Tooltip("Wie viel Schaden macht der Trank bei der Explosion?")]
     [SerializeField] private int potionDamage = 40;
@@ -34,15 +41,25 @@ public class PotionProjectile : MonoBehaviour
         Vector3 spawnPosition = contact.point;
         Quaternion spawnRotation = Quaternion.LookRotation(contact.normal);
 
+        // 1. AUFPRAALL-SOUND SPIELEN
+        // PlayClipAtPoint erstellt ein temporäres Audio-Objekt an der Stelle des Einschlags,
+        // sodass der Sound sauber zu Ende spielt, selbst wenn der Trank in der nächsten Zeile zerstört wird!
+        if (impactSound != null)
+        {
+            AudioSource.PlayClipAtPoint(impactSound, spawnPosition, soundVolume);
+        }
+
+        // 2. VFX SPANWEN
         if (impactVFXPrefab != null)
         {
             GameObject vfxInstance = Instantiate(impactVFXPrefab, spawnPosition, spawnRotation);
             Destroy(vfxInstance, 3f);
         }
 
-        // FLÄCHENSCHADEN AN Gegner VERTEILEN
+        // 3. FLÄCHENSCHADEN AN GEGNER VERTEILEN
         DealExplosionDamage(spawnPosition);
 
+        // 4. TRANK-PREFAB LÖSCHEN
         Destroy(gameObject);
     }
 

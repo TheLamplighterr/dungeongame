@@ -17,40 +17,41 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField] private Animator animator;
 
     [Header("Visuelle Effekte")]
-    [Tooltip("Ziehe hier das Partikelsystem für den Schadensboost rein (z.B. ein Leuchten um die Hände oder den Körper)")]
+    [Tooltip("Ziehe hier das Partikelsystem für den Schadensboost rein")]
     [SerializeField] private ParticleSystem damageBoostParticles;
+
+    [Header("Audio (Angriff)")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip attackSwingSound; // Slash / Kratz-Geräusch
+    [SerializeField] private AudioClip attackHitSound;   // Fleisch / Treffer-Geräusch
 
     private bool canAttack = true;
     private bool isAiming = false;
-    private bool isCombatDisabled = false; // Steuert, ob der Spieler generell angreifen darf
+    private bool isCombatDisabled = false;
 
-    // Temporäre Schadensmodifikatoren
     private int originalLightAttackDamage;
-    private Coroutine currentBoostCoroutine; // Speichert die laufende Coroutine, um sie bei Bedarf sauber zu stoppen
+    private Coroutine currentBoostCoroutine;
 
     void Awake()
     {
-        // Wir merken uns den Standard-Schaden für den Fall eines Boost-Resets
         originalLightAttackDamage = lightAttackDamage;
 
-        // Sicherstellen, dass die Partikel am Anfang aus sind
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
+
         if (damageBoostParticles != null)
         {
             damageBoostParticles.Stop();
         }
     }
 
-    // --- NEU/PROPERTIES FÜR ANDERE SKRIPTE ---
-    
-    /// <summary>
-    /// Erhöht den Schaden für eine bestimmte Dauer.
-    /// Wird von InventorySlotUI aufgerufen (z.B. beim Trinken eines Stärketranks).
-    /// </summary>
-    /// <param name="boostAmount">Wie viel Schaden addiert wird.</param>
-    /// <param name="duration">Wie lange der Boost hält (in Sekunden).</param>
+    // =========================================================
+    // TEMPORÄRER BOOST (Trank / Potion)
+    // =========================================================
     public void BoostDamage(int boostAmount, float duration)
     {
-        // Falls bereits ein Boost läuft, stoppen wir ihn zuerst, um Überlappungen zu vermeiden
         if (currentBoostCoroutine != null)
         {
             StopCoroutine(currentBoostCoroutine);
@@ -61,10 +62,12 @@ public class PlayerAttack : MonoBehaviour
 
     private IEnumerator DamageBoostCoroutine(int boostAmount, float duration)
     {
-        lightAttackDamage = originalLightAttackDamage + boostAmount;
-        Debug.Log($"[Damage Boost] Schaden um {boostAmount} erhöht! Neuer Schaden: {lightAttackDamage} für {duration} Sekunden.");
+        // Addiert den Boost auf den AKTUELLEN (evt. bereits permanent erhöhten) Schaden
+        int previousDamage = lightAttackDamage;
+        lightAttackDamage += boostAmount;
+        
+        Debug.Log($"[Damage Boost] Temp-Schaden um {boostAmount} erhöht! Neuer Schaden: {lightAttackDamage} für {duration}s.");
 
-        // --- NEU: Partikeleffekt starten ---
         if (damageBoostParticles != null)
         {
             damageBoostParticles.Play();
@@ -72,56 +75,54 @@ public class PlayerAttack : MonoBehaviour
 
         yield return new WaitForSeconds(duration);
 
-        // --- NEU: Partikeleffekt stoppen ---
         if (damageBoostParticles != null)
         {
             damageBoostParticles.Stop();
         }
 
-        lightAttackDamage = originalLightAttackDamage;
-        Debug.Log($"[Damage Boost] Vorbei! Schaden wieder normal: {lightAttackDamage}");
+        // Setzt exakt auf den Wert vor dem temporären Boost zurück
+        lightAttackDamage = previousDamage;
+        Debug.Log($"[Damage Boost] Vorbei! Schaden wieder auf: {lightAttackDamage}");
         currentBoostCoroutine = null;
     }
 
-    /// <summary>
-    /// Gibt zurück, ob der Spieler gerade zielt. 
-    /// Wird von PlayerMovement und PlayerCrosshairUI abgefragt.
-    /// </summary>
-    public bool IsAiming()
+    // =========================================================
+    // PERMANENTER BOOST (Rüstung / Amulett / Ausrüstung) - NEU!
+    // =========================================================
+    public void AddPermanentDamage(int boostAmount)
     {
-        return isAiming;
+        originalLightAttackDamage += boostAmount;
+        lightAttackDamage += boostAmount;
+
+        if (damageBoostParticles != null)
+        {
+            damageBoostParticles.Play(); // Zeigt kurz Partikel als Feedback
+        }
+
+        Debug.Log($"[Dauerhafter Boost] Schaden dauerhaft um {boostAmount} erhöht! Neugrundschaden: {lightAttackDamage}");
     }
 
-    /// <summary>
-    /// Deaktiviert den Kampf (wird z.B. vom Inventar aufgerufen).
-    /// </summary>
+    public bool IsAiming() => isAiming;
+
     public void DisableCombat()
     {
         isCombatDisabled = true;
-        ResetCameras(); // Falls er beim Öffnen des Inventars gezielt hat, setzen wir das zurück
+        ResetCameras();
     }
 
-    /// <summary>
-    /// Aktiviert den Kampf wieder (wird beim Schließen des Inventars aufgerufen).
-    /// </summary>
     public void EnableCombat()
     {
         isCombatDisabled = false;
     }
 
-    // -----------------------------------------
-
     void Update()
     {
-        // Wenn der Kampf komplett deaktiviert ist (z.B. Inventar offen), blockieren wir jeglichen Input
         if (isCombatDisabled) return;
-
         HandleInput();
     }
 
     void HandleInput()
     {
-        // Rechtsklick halten zum Zielen (für Trankwurf)
         if (Input.GetMouseButtonDown(1))
         {
             StartAiming();
@@ -134,7 +135,6 @@ public class PlayerAttack : MonoBehaviour
             }
         }
 
-        // LICHTER ANGRIFF: Reagiert jetzt auf Linksklick ODER Taste R!
         if ((Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.R)) && canAttack && !isAiming)
         {
             StartCoroutine(PerformLightAttack());
@@ -158,7 +158,6 @@ public class PlayerAttack : MonoBehaviour
             animator.SetTrigger("Throw");
         }
 
-        // Trank werfen über das separate PotionThrower-Skript
         PotionThrower thrower = GetComponent<PotionThrower>();
         if (thrower != null)
         {
@@ -184,47 +183,46 @@ public class PlayerAttack : MonoBehaviour
     {
         canAttack = false;
 
-        // Trigger die Angriffs-Animation im Animator
         if (animator != null)
         {
             animator.SetTrigger("LightAttack");
         }
 
-        // Schaden austeilen
+        if (audioSource != null && attackSwingSound != null)
+        {
+            audioSource.PlayOneShot(attackSwingSound);
+        }
+
         DealMeleeDamage(lightAttackRange, lightAttackDamage);
 
         yield return new WaitForSeconds(attackCooldown);
         canAttack = true;
     }
 
-    /// <summary>
-    /// Sucht im Angriffsradius nach Gegnern und fügt ihnen Schaden zu.
-    /// </summary>
     void DealMeleeDamage(float range, int damage)
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, range);
+        bool hitEnemy = false;
         
         foreach (Collider hit in hits)
         {
             if (hit.gameObject == gameObject) continue;
 
             EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
-
-            if (enemy == null)
-            {
-                enemy = hit.GetComponentInParent<EnemyHealth>();
-            }
-
-            if (enemy == null)
-            {
-                enemy = hit.GetComponentInChildren<EnemyHealth>();
-            }
+            if (enemy == null) enemy = hit.GetComponentInParent<EnemyHealth>();
+            if (enemy == null) enemy = hit.GetComponentInChildren<EnemyHealth>();
 
             if (enemy != null)
             {
                 enemy.TakeDamage(damage);
+                hitEnemy = true;
                 Debug.Log($"[Nahkampf] {hit.name} erfolgreich getroffen! {damage} Schaden verursacht.");
             }
+        }
+
+        if (hitEnemy && audioSource != null && attackHitSound != null)
+        {
+            audioSource.PlayOneShot(attackHitSound);
         }
     }
 

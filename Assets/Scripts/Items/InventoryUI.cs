@@ -42,6 +42,10 @@ public class InventoryUI : MonoBehaviour
     public Transform dropPoint;
     public float dropHeightOffset = 0.1f;
 
+    [Header("Equipped Slots Trackers")]
+    public int equippedArmorSlotIndex = -1; // -1 bedeutet: Nichts ausgerüstet
+    public int equippedDamageSlotIndex = -1;
+
     void Start()
     {
         CreateUI();
@@ -61,62 +65,62 @@ public class InventoryUI : MonoBehaviour
     }
 
     public void OpenInventory()
-{
-    if (isOpen) return;
-    isOpen = true;
-
-    inventoryPanel.SetActive(true);
-    UpdateUI();
-    SelectSlot(null);
-    ToggleGameplayUI(false);
-
-    if (playerMovement != null) playerMovement.canMove = false;
-    if (playerAttack != null) playerAttack.DisableCombat();
-
-    Time.timeScale = 0f;
-
-    Cursor.visible = true;
-    Cursor.lockState = CursorLockMode.None;
-
-    if (currentAnimation != null) StopCoroutine(currentAnimation);
-    currentAnimation = StartCoroutine(AnimateInventory(true));
-}
-
-public void CloseInventory()
-{
-    if (!isOpen) return;
-    isOpen = false;
-
-    ToggleGameplayUI(true);
-
-    if (playerMovement != null) playerMovement.canMove = true;
-    if (playerAttack != null) playerAttack.EnableCombat();
-
-    Time.timeScale = 1f;
-
-    Cursor.visible = false;
-    Cursor.lockState = CursorLockMode.Locked;
-
-    if (currentAnimation != null) StopCoroutine(currentAnimation);
-    currentAnimation = StartCoroutine(AnimateInventory(false));
-}
-// Reaktiviert die Steuerung exakt nach 1 Frame und setzt den Zustand zurück
-private IEnumerator EnableCameraInputNextFrame(CinemachineInputAxisController controller)
-{
-    yield return null; // Wartet 1 Frame, damit Unity den Cursor-Lock verarbeitet
-
-    if (controller != null)
     {
-        controller.enabled = true;
+        if (isOpen) return;
+        isOpen = true;
+
+        inventoryPanel.SetActive(true);
+        UpdateUI();
+        SelectSlot(null);
+        ToggleGameplayUI(false);
+
+        if (playerMovement != null) playerMovement.canMove = false;
+        if (playerAttack != null) playerAttack.DisableCombat();
+
+        Time.timeScale = 0f;
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        if (currentAnimation != null) StopCoroutine(currentAnimation);
+        currentAnimation = StartCoroutine(AnimateInventory(true));
     }
 
-    CinemachineCamera vcam = FindFirstObjectByType<CinemachineCamera>();
-    if (vcam != null)
+    public void CloseInventory()
     {
-        vcam.PreviousStateIsValid = false;
-    }
-}
+        if (!isOpen) return;
+        isOpen = false;
 
+        ToggleGameplayUI(true);
+
+        if (playerMovement != null) playerMovement.canMove = true;
+        if (playerAttack != null) playerAttack.EnableCombat();
+
+        Time.timeScale = 1f;
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        if (currentAnimation != null) StopCoroutine(currentAnimation);
+        currentAnimation = StartCoroutine(AnimateInventory(false));
+    }
+
+    // Reaktiviert die Steuerung exakt nach 1 Frame und setzt den Zustand zurück
+    private IEnumerator EnableCameraInputNextFrame(CinemachineInputAxisController controller)
+    {
+        yield return null; // Wartet 1 Frame, damit Unity den Cursor-Lock verarbeitet
+
+        if (controller != null)
+        {
+            controller.enabled = true;
+        }
+
+        CinemachineCamera vcam = FindFirstObjectByType<CinemachineCamera>();
+        if (vcam != null)
+        {
+            vcam.PreviousStateIsValid = false;
+        }
+    }
 
     // Coroutine für flüssiges Ein-/Ausblenden auch bei pausiertem Spiel!
     private IEnumerator AnimateInventory(bool open)
@@ -201,12 +205,24 @@ private IEnumerator EnableCameraInputNextFrame(CinemachineInputAxisController co
     }
 
     public void UpdateUI()
+{
+    for (int i = 0; i < slots.Length; i++)
     {
-        for (int i = 0; i < slots.Length; i++)
+        slots[i].SetItem(inventory.items[i]);
+
+        // Prüft zentral, ob dieser Slot gerade der ausgerüstete Armor- oder Damage-Slot ist!
+        if (i == equippedArmorSlotIndex || i == equippedDamageSlotIndex)
         {
-            slots[i].SetItem(inventory.items[i]);
+            slots[i].isEquipped = true;
         }
+        else
+        {
+            slots[i].isEquipped = false;
+        }
+
+        slots[i].UpdateVisuals();
     }
+}
 
     public void DropItem(int index)
     {
@@ -225,8 +241,23 @@ private IEnumerator EnableCameraInputNextFrame(CinemachineInputAxisController co
 
         Instantiate(item.worldPrefab, spawnPos, Quaternion.identity);
 
+        // --- AUDIO: Wurf-/Drop-Sound abspielen ---
+        if (inventory != null)
+        {
+            inventory.PlayDropSound();
+        }
+
         inventory.RemoveItem(index);
         UpdateUI();
         SelectSlot(null);
     }
+
+    public InventorySlotUI GetSlotByIndex(int index)
+{
+    if (slots != null && index >= 0 && index < slots.Length)
+    {
+        return slots[index];
+    }
+    return null;
+}
 }
