@@ -150,6 +150,7 @@ GameObject:
   - component: {fileID: 8042980937121834070}
   - component: {fileID: 3991957375228805507}
   - component: {fileID: 6066025069952167655}
+  - component: {fileID: 1346189868958216717}
   m_Layer: 0
   m_Name: Button
   m_TagString: Untagged
@@ -300,3 +301,19 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &1346189868958216717
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 196181215336512455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3a2f67bee9ff894e8416ca662d253aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIButtonSound
+  hoverSoundName: ButtonHover
+  clickSoundName: ButtonClick
+  scaleMultiplier: 1.05
+  tweenSpeed: 15

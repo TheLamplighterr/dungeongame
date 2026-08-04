@@ -3,29 +3,32 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
-
     public void Start()
     {   
-        /////////Insert Musik///////////////////////
-        MusicManager.Instance.PlayMusic("Main Menu");
+        ///////// Insert Musik /////////
+        if (MusicManager.Instance != null)
+        {
+            MusicManager.Instance.PlayMusic("Main Menu");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ MusicManager wurde in der MainMenu-Szene nicht gefunden!");
+        }
     }
-     public void Play()
+
+    public void Play()
     {
-        
+        ///////// Insert Musik /////////
+        if (MusicManager.Instance != null)
+        {
+            MusicManager.Instance.PlayMusic("Dungeon");
+        }
+
         SceneManager.LoadScene("SampleScene");
-        
-        /////////Insert Musik///////////////////////
-        MusicManager.Instance.PlayMusic("Dungeon Theme");
-
     }
 
-    
-     public void Quit()
+    public void Quit()
     {
-        
         Application.Quit();
-
     }
-
-    
 }

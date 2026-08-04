@@ -5,30 +5,33 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Bewegung (Normal)")]
     [SerializeField] private float walkSpeed = 5f;
-    [SerializeField] private float sprintSpeed = 8.5f; // NEU: Sprintgeschwindigkeit
+    [SerializeField] private float sprintSpeed = 8.5f;
     [SerializeField] private float gravity = -9.81f;
     
-    [Header("Springen")]
-    [SerializeField] private float jumpHeight = 1.5f; // NEU: Sprunghöhe
-    [SerializeField] private KeyCode jumpKey = KeyCode.Space; // NEU: Sprungtaste
-    [SerializeField] private KeyCode sprintKey = KeyCode.LeftShift; // NEU: Sprinttaste
+    [Header("Springen & Doppelsprung")]
+    [SerializeField] private float jumpHeight = 1.5f;
+    [SerializeField] private int maxJumps = 2; // NEU: 2 für Doppelsprung (3 für Dreifachsprung usw.)
+    [SerializeField] private KeyCode jumpKey = KeyCode.Space;
+    [SerializeField] private KeyCode sprintKey = KeyCode.LeftShift;
 
     [Header("VFX (Speed Lines)")]
-    [SerializeField] private ParticleSystem speedLinesParticles; // NEU: Hier das Partikelsystem im Inspector reinziehen
+    [SerializeField] private ParticleSystem speedLinesParticles;
 
-    // Vom Inventar-Skript gesucht: Bestimmt, ob sich der Spieler bewegen darf
     [HideInInspector] public bool canMove = true; 
 
     [Header("Rotation (Normal)")]
     [SerializeField] private float rotationSpeed = 10f;
 
     [Header("Rotation (Beim Zielen)")]
-    [SerializeField] private float aimSensitivity = 2f; // Maus-Sensibilität beim Zielen
+    [SerializeField] private float aimSensitivity = 2f;
 
     private CharacterController controller;
     private PlayerAttack playerAttack; 
     private Transform mainCameraTransform;
     private Vector3 velocity;
+
+    // NEU: Hält nach, wie viele Sprünge in der Luft noch übrig sind
+    private int jumpsRemaining;
 
     void Start()
     {
@@ -40,54 +43,53 @@ public class PlayerMovement : MonoBehaviour
             mainCameraTransform = Camera.main.transform;
         }
 
-        // Sperrt den Mauszeiger im Spielfenster
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Sicherheits-Check: Falls das Partikelsystem beim Start läuft, stoppen wir es kurz
         if (speedLinesParticles != null && speedLinesParticles.isPlaying)
         {
             speedLinesParticles.Stop();
         }
+
+        // Zu Beginn die verbleibenden Sprünge initialisieren
+        jumpsRemaining = maxJumps;
     }
 
     void Update()
     {
-        // 1. Schwerkraft-Vorbereitung (läuft immer)
-        if (controller.isGrounded && velocity.y < 0)
+        // 1. Schwerkraft & Boden-Check
+        if (controller.isGrounded)
         {
-            velocity.y = -2f;
+            if (velocity.y < 0)
+            {
+                velocity.y = -2f;
+            }
+            // NEU: Sobald wir auf dem Boden stehen, setzen wir die Sprünge zurück
+            jumpsRemaining = maxJumps;
         }
 
         Vector3 moveDirection = Vector3.zero;
-        bool shouldPlayVFX = false; // NEU: Merkt sich, ob wir den EFFEKT zeigen wollen
+        bool shouldPlayVFX = false;
 
-        // 2. Bewegung & Rotation nur ausführen, wenn wir uns bewegen dürfen!
+        // 2. Bewegung & Rotation
         if (canMove)
         {
             float horizontal = Input.GetAxisRaw("Horizontal");
             float vertical = Input.GetAxisRaw("Vertical");
             Vector3 inputDirection = new Vector3(horizontal, 0f, vertical).normalized;
 
-            // Fragt direkt die IsAiming()-Funktion aus PlayerAttack ab!
             bool isAiming = playerAttack != null && playerAttack.IsAiming();
-
-            // SPRINTEN: Sprinten ist nur aktiv, wenn wir Shift drücken und NICHT zielen
             bool isSprinting = Input.GetKey(sprintKey) && !isAiming;
             float currentSpeed = isSprinting ? sprintSpeed : walkSpeed;
 
-            // NEU: Effekt nur aktivieren, wenn wir sprinten UND uns auch wirklich bewegen!
             if (isSprinting && inputDirection.magnitude >= 0.1f)
             {
                 shouldPlayVFX = true;
-                
-                // TEST-MELDUNG: Gibt eine Nachricht in deiner Unity-Konsole aus
-                Debug.Log("Sprintschnittstelle AKTIV: Partikel sollten starten!");
             }
 
             if (isAiming)
             {
-                // --- GENSHIN AIM MODE MOVEMENT (STRAFING) ---
+                // --- ZIELEN-BEWEGUNG ---
                 if (mainCameraTransform != null)
                 {
                     Vector3 camForward = mainCameraTransform.forward;
@@ -99,14 +101,12 @@ public class PlayerMovement : MonoBehaviour
                     camRight.Normalize();
 
                     moveDirection = (camForward * vertical + camRight * horizontal).normalized;
-                    
-                    // Der Charakter bewegt sich starr in diese Richtung (immer im normalen Gehtempo für präzises Zielen)
                     controller.Move(moveDirection * walkSpeed * Time.deltaTime);
                 }
             }
             else
             {
-                // --- NORMALER BEWEGUNGS-MODUS ---
+                // --- NORMALE BEWEGUNG ---
                 if (inputDirection.magnitude >= 0.1f && mainCameraTransform != null)
                 {
                     Vector3 camForward = mainCameraTransform.forward;
@@ -122,44 +122,39 @@ public class PlayerMovement : MonoBehaviour
                 }
             }
 
-            // --- SPRINGEN (NEU) ---
-            // Nur springen, wenn wir auf dem Boden stehen und die Taste drücken
-            if (Input.GetKeyDown(jumpKey) && controller.isGrounded)
+            // --- SPRINGEN (ANGEPASST FÜR DOPPELSPRUNG) ---
+            if (Input.GetKeyDown(jumpKey) && jumpsRemaining > 0)
             {
-                // Physikalische Formel für Sprunghöhe: v = sqrt(h * -2 * g)
+                // Setzt die Vertikalgeschwindigkeit komplett zurück, damit der zweite Sprung 
+                // in der Luft den gleichen "Punch" hat wie der erste (egal wie schnell man fällt)
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                
+                // Einen Sprung abziehen
+                jumpsRemaining--;
             }
 
             // Rotation steuern
             HandleRotation(moveDirection);
         }
 
-        // NEU: Partikeleffekt basierend auf der Bewegung steuern (mit Null-Check, um Fehler zu vermeiden)
         HandleSpeedLinesVFX(shouldPlayVFX);
 
-        // 3. Schwerkraft physikalisch anwenden
+        // 3. Schwerkraft anwenden
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
     }
 
-    // NEU: Eigene Methode zur sauberen Steuerung des Partikelsystems
     private void HandleSpeedLinesVFX(bool play)
     {
-        if (speedLinesParticles == null) return; // Abbrechen, falls kein Partikelsystem zugewiesen wurde
+        if (speedLinesParticles == null) return;
 
         if (play)
         {
-            if (!speedLinesParticles.isPlaying)
-            {
-                speedLinesParticles.Play();
-            }
+            if (!speedLinesParticles.isPlaying) speedLinesParticles.Play();
         }
         else
         {
-            if (speedLinesParticles.isPlaying)
-            {
-                speedLinesParticles.Stop();
-            }
+            if (speedLinesParticles.isPlaying) speedLinesParticles.Stop();
         }
     }
 
@@ -169,12 +164,9 @@ public class PlayerMovement : MonoBehaviour
 
         if (isAiming)
         {
-            // --- ZIELEN-ROTATION (GENSHIN STYLE) ---
-            // Die Maus dreht den Spieler-Körper direkt um die Y-Achse (links/rechts).
             float mouseX = Input.GetAxis("Mouse X") * aimSensitivity;
             transform.Rotate(Vector3.up * mouseX);
 
-            // Sicherheits-Check: Absolut synchron mit dem Kamera-Forward-Vektor schauen
             if (mainCameraTransform != null)
             {
                 Vector3 cameraForward = mainCameraTransform.forward;
@@ -187,8 +179,6 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            // --- NORMALE ROTATION ---
-            // Wenn wir uns bewegen, drehen wir uns weich in die Laufrichtung
             if (moveDirection.magnitude >= 0.1f)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(moveDirection);

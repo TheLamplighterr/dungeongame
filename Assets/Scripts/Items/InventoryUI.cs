@@ -1,5 +1,9 @@
 using UnityEngine;
-using System.Collections.Generic; // Ermöglicht die Nutzung von Listen
+using UnityEngine.UI;
+using TMPro;
+using System.Collections;
+using System.Collections.Generic;
+using Unity.Cinemachine;
 
 public class InventoryUI : MonoBehaviour
 {
@@ -8,91 +12,179 @@ public class InventoryUI : MonoBehaviour
     public InventorySlotUI slotPrefab;
     public Transform slotParent;
 
+    [Header("Item Details")]
+    public Image detailIconImage;
+    public TMP_Text detailNameText;
+    public TMP_Text detailDescriptionText;
+
     [Header("Player")]
     public PlayerMovement playerMovement;
     public PlayerAttack playerAttack;
     public PlayerHealth playerHealth;
+    public Transform player;
 
-    [Header("UI")]
+    [Header("UI Windows & Animation")]
     public GameObject inventoryPanel;
+    public CanvasGroup canvasGroup; // Steuert die Transparenz
+    public float animationDuration = 0.25f; // Dauer der Animation in Sekunden
 
     [Header("Gameplay UI zum Ausblenden")]
-    [Tooltip("Ziehe hier die UI-Elemente rein, die beim Öffnen des Inventars verschwinden und beim Schließen wiederkommen sollen")]
     [SerializeField] private List<GameObject> gameplayUIElementsToHide = new List<GameObject>();
 
     [Header("State")]
     private bool isOpen = false;
     public bool IsOpen => isOpen;
-    public bool JustClosedInventory { get; private set; }
 
     private InventorySlotUI[] slots;
+    private Coroutine currentAnimation; // Verhindert Animations-Konflikte
 
     [Header("Drop")]
     public Transform dropPoint;
     public float dropHeightOffset = 0.1f;
 
-    public Transform player;
-
     void Start()
     {
         CreateUI();
-        UpdateUI();
+        
+        // Sicherstellen, dass CanvasGroup zugewiesen ist
+        if (canvasGroup == null && inventoryPanel != null)
+        {
+            canvasGroup = inventoryPanel.GetComponent<CanvasGroup>();
+        }
 
+        // Zu Beginn unsichtbar machen & deaktivieren
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 0f;
+        }
         inventoryPanel.SetActive(false);
     }
 
-    void Update()
+    public void OpenInventory()
+{
+    if (isOpen) return;
+    isOpen = true;
+
+    inventoryPanel.SetActive(true);
+    UpdateUI();
+    SelectSlot(null);
+    ToggleGameplayUI(false);
+
+    if (playerMovement != null) playerMovement.canMove = false;
+    if (playerAttack != null) playerAttack.DisableCombat();
+
+    Time.timeScale = 0f;
+
+    Cursor.visible = true;
+    Cursor.lockState = CursorLockMode.None;
+
+    if (currentAnimation != null) StopCoroutine(currentAnimation);
+    currentAnimation = StartCoroutine(AnimateInventory(true));
+}
+
+public void CloseInventory()
+{
+    if (!isOpen) return;
+    isOpen = false;
+
+    ToggleGameplayUI(true);
+
+    if (playerMovement != null) playerMovement.canMove = true;
+    if (playerAttack != null) playerAttack.EnableCombat();
+
+    Time.timeScale = 1f;
+
+    Cursor.visible = false;
+    Cursor.lockState = CursorLockMode.Locked;
+
+    if (currentAnimation != null) StopCoroutine(currentAnimation);
+    currentAnimation = StartCoroutine(AnimateInventory(false));
+}
+// Reaktiviert die Steuerung exakt nach 1 Frame und setzt den Zustand zurück
+private IEnumerator EnableCameraInputNextFrame(CinemachineInputAxisController controller)
+{
+    yield return null; // Wartet 1 Frame, damit Unity den Cursor-Lock verarbeitet
+
+    if (controller != null)
     {
-        UpdateUI();
+        controller.enabled = true;
     }
 
-    void OpenInventory()
+    CinemachineCamera vcam = FindFirstObjectByType<CinemachineCamera>();
+    if (vcam != null)
     {
-        isOpen = true;
-        inventoryPanel.SetActive(true);
+        vcam.PreviousStateIsValid = false;
+    }
+}
 
-        // --- NEU: Gameplay-UI ausblenden ---
-        ToggleGameplayUI(false);
 
-        // PLAYER LOCK
-        playerMovement.canMove = false;
-        playerAttack.DisableCombat();
+    // Coroutine für flüssiges Ein-/Ausblenden auch bei pausiertem Spiel!
+    private IEnumerator AnimateInventory(bool open)
+    {
+        float timer = 0f;
+        float startAlpha = canvasGroup != null ? canvasGroup.alpha : (open ? 0f : 1f);
+        float targetAlpha = open ? 1f : 0f;
 
-        // GAME PAUSE (optional aber stabil)
-        Time.timeScale = 0f;
+        Vector3 startScale = open ? new Vector3(0.9f, 0.9f, 0.9f) : Vector3.one;
+        Vector3 targetScale = open ? Vector3.one : new Vector3(0.9f, 0.9f, 0.9f);
 
-        // CURSOR
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
+        while (timer < animationDuration)
+        {
+            // unscaledDeltaTime nutzen, da timeScale = 0f ist!
+            timer += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(timer / animationDuration);
+
+            // Weicher Übergang (Smoothstep Curve)
+            float smoothProgress = Mathf.SmoothStep(0f, 1f, progress);
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, smoothProgress);
+            }
+
+            inventoryPanel.transform.localScale = Vector3.Lerp(startScale, targetScale, smoothProgress);
+
+            yield return null;
+        }
+
+        if (canvasGroup != null) canvasGroup.alpha = targetAlpha;
+        inventoryPanel.transform.localScale = targetScale;
+
+        // Nach dem Ausblenden das Panel deaktivieren
+        if (!open)
+        {
+            inventoryPanel.SetActive(false);
+        }
     }
 
-    void CloseInventory()
+    public void Open() => OpenInventory();
+    public void Close() => CloseInventory();
+
+    public void SelectSlot(ItemData item)
     {
-        isOpen = false;
-        inventoryPanel.SetActive(false);
+        if (item == null)
+        {
+            if (detailIconImage) detailIconImage.enabled = false;
+            if (detailNameText) detailNameText.text = "";
+            if (detailDescriptionText) detailDescriptionText.text = "";
+            return;
+        }
 
-        // --- NEU: Gameplay-UI wieder einblenden ---
-        ToggleGameplayUI(true);
+        if (detailIconImage)
+        {
+            detailIconImage.enabled = true;
+            detailIconImage.sprite = item.icon;
+        }
 
-        // PLAYER UNLOCK
-        playerMovement.canMove = true;
-        playerAttack.EnableCombat();
-
-        Time.timeScale = 1f;
-
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
+        if (detailNameText) detailNameText.text = item.itemName;
+        if (detailDescriptionText) detailDescriptionText.text = item.description;
     }
 
-    // Hilfsmethode, um die UI-Elemente an- oder auszuschalten
     private void ToggleGameplayUI(bool show)
     {
         foreach (GameObject uiElement in gameplayUIElementsToHide)
         {
-            if (uiElement != null)
-            {
-                uiElement.SetActive(show);
-            }
+            if (uiElement != null) uiElement.SetActive(show);
         }
     }
 
@@ -116,18 +208,9 @@ public class InventoryUI : MonoBehaviour
         }
     }
 
-    public void RemoveItem(int index)
-    {
-        inventory.items[index] = null;
-        UpdateUI();
-    }
-
-    public LayerMask groundMask;
-
     public void DropItem(int index)
     {
-        if (inventory.items[index] == null)
-            return;
+        if (inventory.items[index] == null) return;
 
         ItemData item = inventory.items[index];
 
@@ -137,30 +220,13 @@ public class InventoryUI : MonoBehaviour
             return;
         }
 
-        if (dropPoint == null)
-        {
-            Debug.LogError("DropPoint nicht gesetzt!");
-            return;
-        }
-
-        // Spawn Position leicht über Boden
-        Vector3 spawnPos = dropPoint.position + Vector3.up * dropHeightOffset;
+        Vector3 spawnPos = (dropPoint != null) ? dropPoint.position : player.position;
+        spawnPos += Vector3.up * dropHeightOffset;
 
         Instantiate(item.worldPrefab, spawnPos, Quaternion.identity);
 
         inventory.RemoveItem(index);
         UpdateUI();
-    }
-
-    public void Open()
-    {
-        if (!isOpen)
-            OpenInventory();
-    }
-
-    public void Close()
-    {
-        if (isOpen)
-            CloseInventory();
+        SelectSlot(null);
     }
 }

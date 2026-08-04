@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class InventorySlotUI : MonoBehaviour
+public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [Header("UI")]
     public Image iconImage;
@@ -10,6 +11,10 @@ public class InventorySlotUI : MonoBehaviour
     [HideInInspector] public int slotIndex;
 
     private ItemData currentItem;
+    private bool isHovered = false; // Merkt sich, ob die Maus gerade auf DIESEM Slot steht
+
+    [Header("Keybindings")]
+    [SerializeField] private KeyCode dropKey = KeyCode.Q; // Standardmäßig 'Q' (kannst du im Inspector ändern)
 
     // =========================
     // SET ITEM
@@ -27,70 +32,87 @@ public class InventorySlotUI : MonoBehaviour
 
         iconImage.enabled = true;
         iconImage.sprite = currentItem.icon;
-        iconImage.color = new Color(1.2f, 1.2f, 1.2f, 1f);    }
+        iconImage.color = Color.white;
+    }
 
-    // =========================
-    // USE ITEM
-    // =========================
-    public void OnClick()
+    void Update()
     {
-        if (currentItem == null)
-            return;
+        // Wenn die Maus auf diesem Slot steht, ein Item da ist UND 'Q' gedrückt wird -> Droppen!
+        if (isHovered && currentItem != null && Input.GetKeyDown(dropKey))
+        {
+            DropThisItem();
+        }
+    }
 
-        UseItem();
+    // =========================
+    // MOUSE HOVER EVENTS
+    // =========================
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        isHovered = true;
+
+        if (inventoryUI != null)
+        {
+            inventoryUI.SelectSlot(currentItem);
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        isHovered = false;
+    }
+
+    // =========================
+    // MOUSE CLICK (NUR NOCH LINKSKLICK ZUM BENUTZEN)
+    // =========================
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (currentItem == null) return;
+
+        // Nur noch Linksklick zum Verbrauchen / Benutzen!
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            UseItem();
+        }
     }
 
     void UseItem()
     {
-        // über InventoryUI → Player Transform → GetComponent
         if (inventoryUI == null || inventoryUI.player == null)
             return;
 
-        PlayerHealth playerHealth =
-            inventoryUI.player.GetComponent<PlayerHealth>();
-
-        if (playerHealth == null)
-            return;
+        PlayerHealth playerHealth = inventoryUI.player.GetComponent<PlayerHealth>();
 
         switch (currentItem.itemType)
         {
             case ItemType.Heal:
-                playerHealth.Heal(currentItem.value);
-                Debug.Log(" Heal used: " + currentItem.value);
+                if (playerHealth != null)
+                {
+                    playerHealth.Heal(currentItem.value);
+                    Debug.Log("Heal used: " + currentItem.value);
+                }
                 break;
 
-
             case ItemType.DamageBoost:
-                PlayerAttack attack =
-                    inventoryUI.player.GetComponent<PlayerAttack>();
-
+                PlayerAttack attack = inventoryUI.player.GetComponent<PlayerAttack>();
                 if (attack != null)
                 {
                     attack.BoostDamage(currentItem.value, 10f);
-                    Debug.Log("⚔ Damage Boost activated!");
+                    Debug.Log(" Damage Boost activated!");
                 }
                 break;
         }
 
-        // Item entfernen
-        if (inventoryUI != null)
-        {
-            inventoryUI.inventory.RemoveItem(slotIndex);
-            inventoryUI.UpdateUI();
-        }
+        inventoryUI.inventory.RemoveItem(slotIndex);
+        inventoryUI.UpdateUI();
+        inventoryUI.SelectSlot(null);
     }
 
-    // =========================
-    // DROP
-    // =========================
-    void Update()
+    void DropThisItem()
     {
-        if (currentItem == null)
-            return;
-
-        if (Input.GetMouseButtonDown(1))
+        if (inventoryUI != null)
         {
-            inventoryUI?.DropItem(slotIndex);
+            inventoryUI.DropItem(slotIndex);
         }
     }
 }

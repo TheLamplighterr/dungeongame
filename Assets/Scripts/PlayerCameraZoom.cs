@@ -13,7 +13,7 @@ public class PlayerCameraZoom : MonoBehaviour
     [SerializeField] private float smoothSpeed = 8f;      
 
     private Cinemachine3rdPersonFollow thirdPersonFollow;
-    private CinemachineOrbitalFollow orbitalFollow; // Falls du ein Orbital-Follow benutzt!
+    private CinemachineOrbitalFollow orbitalFollow;
     
     private float targetDistance;
     private bool isOrbital = false;
@@ -22,7 +22,7 @@ public class PlayerCameraZoom : MonoBehaviour
     {
         if (normalCamera == null)
         {
-            Debug.LogError("DIAGNOSE: Keine 'normalCamera' im Inspector zugewiesen! Bitte ziehe deine normale Cinemachine-Kamera in den Slot.");
+            Debug.LogError("DIAGNOSE: Keine 'normalCamera' im Inspector zugewiesen!");
             return;
         }
 
@@ -31,36 +31,26 @@ public class PlayerCameraZoom : MonoBehaviour
         if (thirdPersonFollow != null)
         {
             targetDistance = thirdPersonFollow.CameraDistance;
-            Debug.Log($"DIAGNOSE: Erfolg! Cinemachine3rdPersonFollow gefunden. Start-Distanz ist: {targetDistance}");
             return;
         }
 
-        // 2. Versuche Orbital Follow zu finden (sehr häufig in v3!)
+        // 2. Versuche Orbital Follow zu finden
         orbitalFollow = normalCamera.GetComponent<CinemachineOrbitalFollow>();
         if (orbitalFollow != null)
         {
             isOrbital = true;
-            targetDistance = orbitalFollow.Radius; // Bei Orbital heißt die Distanz Radius
-            Debug.Log($"DIAGNOSE: Erfolg! CinemachineOrbitalFollow gefunden. Start-Radius ist: {targetDistance}");
+            targetDistance = orbitalFollow.Radius;
             return;
         }
-
-        Debug.LogError("DIAGNOSE: Weder 'Cinemachine3rdPersonFollow' noch 'CinemachineOrbitalFollow' auf deiner Kamera gefunden! Schau mal im Inspector deiner Kamera, welche Follow-Komponente aktiv ist.");
     }
 
     void Update()
     {
-        // 1. Input abfragen (Sowohl Mausrad ALS AUCH Tasten!)
-        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+        // Wenn das Spiel pausiert ist (z.B. Inventar offen), keinen Zoom verarbeiten
+        if (Time.timeScale == 0f) return;
 
-        if (Input.GetKey(KeyCode.O)) 
-        {
-            scrollInput = -0.1f; 
-        }
-        else if (Input.GetKey(KeyCode.I)) 
-        {
-            scrollInput = 0.1f;
-        }
+        // 1. Nur das Mausrad abfragen! (KeyCode.I wurde entfernt, da es das Inventar triggert)
+        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
 
         if (Mathf.Abs(scrollInput) > 0.01f)
         {
@@ -69,7 +59,7 @@ public class PlayerCameraZoom : MonoBehaviour
             targetDistance = Mathf.Clamp(targetDistance, minDistance, maxDistance);
         }
 
-        // 2. Zoom weich anwenden, je nachdem welche Komponente aktiv ist
+        // 2. Zoom weich anwenden
         if (thirdPersonFollow != null)
         {
             thirdPersonFollow.CameraDistance = Mathf.Lerp(
