@@ -126,6 +126,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b89db86222a4cca40b9cd155b4e222d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
-  itemData: {fileID: 11400000, guid: 98a3770b4581b8e47b73edd5eb912e1a, type: 2}
+  itemData: {fileID: 11400000, guid: def135ee50c7a5c46a56362237ba7ff6, type: 2}
   pickupSound: {fileID: 8300000, guid: 2ad3db3547f305c48948f99b682ea2f6, type: 3}
   soundVolume: 1

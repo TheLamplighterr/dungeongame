@@ -225,6 +225,7 @@ Transform:
   m_Children:
   - {fileID: 4213874849789225547}
   - {fileID: 6649553283683048500}
+  - {fileID: 7627715562432799518}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6832938136402603772
@@ -468,6 +469,68 @@ Transform:
   m_Children: []
   m_Father: {fileID: 7140356680221970872}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1469962695736045886
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5725678594705265470}
+    m_Modifications:
+    - target: {fileID: 3150542807808023604, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_Name
+      value: 'Fancy-Cape '
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.7054148
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.59
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.4611113
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+--- !u!4 &7627715562432799518 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9060483429068083744, guid: 142bb695f796e9247af5edada2431f64, type: 3}
+  m_PrefabInstance: {fileID: 1469962695736045886}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7249983877681952339
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DamageBoost
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Damage Potion
-  icon: {fileID: 21300000, guid: 3d917d48e67bd4a47a7a5412ddd90a31, type: 3}
+  icon: {fileID: 21300000, guid: 9136387296173eb44a4b4a7efe95a34d, type: 3}
   worldPrefab: {fileID: 1000012970591572, guid: 7cafb89b5a0f61f479d0a748962abbbc, type: 3}
   description: A Potion that gives you +10 damage Boost for a short time.
   itemType: 1

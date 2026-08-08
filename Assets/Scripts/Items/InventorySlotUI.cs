@@ -51,7 +51,7 @@ public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
         if (isEquipped)
         {
-            iconImage.color = new Color(0.4f, 1f, 0.4f, 1f); // Grün = Ausgerüstet
+            iconImage.color = new Color(0.6f, 0.6f, 0.6f, 1f); // Grau = Ausgerüstet       
         }
         else
         {

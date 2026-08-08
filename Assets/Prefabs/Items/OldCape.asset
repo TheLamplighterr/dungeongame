@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: OldCape
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Old Cape
-  icon: {fileID: 21300000, guid: 7d02e600426878e4db93c09148bad7c3, type: 3}
+  icon: {fileID: 21300000, guid: 3014d377d7c090f4ab06da9066117236, type: 3}
   worldPrefab: {fileID: 3150542807808023604, guid: bdfb96fa578c78947a2dfd2caa5da416, type: 3}
   description: An old, perforated cape. Wearing it gives you +5 HP!
   itemType: 3

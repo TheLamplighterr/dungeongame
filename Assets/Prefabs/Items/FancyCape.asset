@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FancyCape
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Fancy Cape
-  icon: {fileID: 21300000, guid: 7d02e600426878e4db93c09148bad7c3, type: 3}
+  icon: {fileID: 21300000, guid: 81d47d247f842fb479eb9b7f9d19e53b, type: 3}
   worldPrefab: {fileID: 3150542807808023604, guid: bdfb96fa578c78947a2dfd2caa5da416, type: 3}
   description: A bright, fancy cape. Wearing it gives you +15 HP!
   itemType: 3

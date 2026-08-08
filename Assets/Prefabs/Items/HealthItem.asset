@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: HealthItem
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Heal Potion
-  icon: {fileID: -8702173501659278061, guid: 8637238347ea8cf4b9c4bea5df5eaa24, type: 3}
+  icon: {fileID: 21300000, guid: 04dd5a266558ac54dafe5bc2b625c892, type: 3}
   worldPrefab: {fileID: 1000013846074356, guid: 11e31a2ebb4e6e246bcf8c0ba034a031, type: 3}
   description: A Potion that gives u a small heal.
   itemType: 0
