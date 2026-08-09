@@ -30,6 +30,17 @@ public class MapManager : MonoBehaviour
     public int treasureRoomCount = 1;   //let       
     public int bossRoomCount = 1;       //const
 
+    public int level = 1;
+
+    public int getLevel()
+    {
+        return level;
+    }
+
+    public MapManager GetMapManager()
+    {
+        return this;
+    }
 
     //level boundaries
     //adjustGenerationBoundaries
@@ -39,6 +50,19 @@ public class MapManager : MonoBehaviour
         return scale;
     }
     public static float GetMapDistance() { return distance; }
+
+    //roomInitRequest
+    public int deliverSimplePathFromXY(int givenX, int givenY)
+    {
+        return simpleMap[givenX][givenY][5];
+    }
+
+    //deliver room openings
+    public int[] deliverRoomOpeningsForXY(int givenX, int givenY)
+    {
+        return new int[4] {simpleMap[givenX][givenY][1], simpleMap[givenX][givenY][2], 
+                            simpleMap[givenX][givenY][3], simpleMap[givenX][givenY][4]};
+    }
 
     List<int[]> roomList = new List<int[]>()        //liste aller aktiven räume mit position und verweis
         {
@@ -258,24 +282,32 @@ public class MapManager : MonoBehaviour
                         {
                             stairsFound = true;
                             simpleMap[x][y - 1][0] = stairsRoom;
+                            spawnField[0] = x;
+                            spawnField[1] = y-1;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x, y-1});
                         }
                         else if (((tempRandom + i) % 4) + 1 == 2 && simpleMap[x+1][y][0] == 0)      //rechts versuchen
                         {
                             stairsFound = true;
                             simpleMap[x+1][y][0] = stairsRoom;
+                            spawnField[0] = x+1;
+                            spawnField[1] = y;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x+1,y});
                         }
                         else if (((tempRandom + i) % 4) + 1 == 3 && simpleMap[x][y + 1][0] == 0)    //unten versuchen
                         {
                             stairsFound = true;
                             simpleMap[x][y + 1][0] = stairsRoom;
+                            spawnField[0] = x;
+                            spawnField[1] = y + 1;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x, y + 1 });
                         }
                         else if (((tempRandom + i) % 4) + 1 == 4 && simpleMap[x-1][y][0] == 0)      //links versuchen
                         {
                             stairsFound = true;
                             simpleMap[x-1][y][0] = stairsRoom;
+                            spawnField[0] = x - 1;
+                            spawnField[1] = y;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x-1, y });
                         }
                     }
@@ -306,6 +338,16 @@ public class MapManager : MonoBehaviour
 
     List<int[]> families = new List<int[]>();
     //familyForm: roomListID, famInt
+
+
+    private void resetLists()
+    {
+        connections = new List<int[]>();
+        families = new List<int[]>();
+        
+
+    }
+
 
     int calculateWeightFromXY(int x, int y, int x2, int y2)
     {
@@ -737,6 +779,15 @@ public class MapManager : MonoBehaviour
 
     */
 
+
+    public void generateNewLevel()
+    {
+        resetLists();
+        if(Quadtree.destroyAllLinkedRooms() == 1)
+        {
+            generateSimpleMap();
+        }
+    }
 
     void Start()
     {

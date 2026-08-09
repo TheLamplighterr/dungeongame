@@ -13904,6 +13904,7 @@ MonoBehaviour:
   poiCount: 5
   treasureRoomCount: 3
   bossRoomCount: 1
+  level: 1
 --- !u!114 &1673605468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13917,7 +13918,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomCollection
   connectorRooms:
-  - {fileID: 2051560339278910390, guid: 6c159470e5d5bec428106fd9f1de95d6, type: 3}
+  - {fileID: 6303766856751736948, guid: 4e2dfa5e61989874eb6ad154dc8fa54d, type: 3}
   spawnRooms:
   - {fileID: 4318727135850453802, guid: 20917c64740462844aa37a673db2c9ef, type: 3}
   poiRooms:
@@ -13945,6 +13946,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TreeBranch
   mapManager: {fileID: 1673605467}
   roomCollection: {fileID: 1673605468}
+  linked: 0
   upperLeft: {fileID: 0}
   upperRight: {fileID: 0}
   lowerLeft: {fileID: 0}

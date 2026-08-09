@@ -5,10 +5,17 @@ public class TreeBranch : MonoBehaviour
     public MapManager mapManager;
     public RoomCollection roomCollection;
 
+    public TreeBranch GetTreeBranch()
+    {
+        return this;
+    }
+
     private static int layersForLeaf = 3;       //how many layers before it is a leaf
 
     private int layer;
     private bool isLeaf;
+
+    public bool linked = false;
 
     public TreeBranch upperLeft = null;
     public TreeBranch upperRight = null;
@@ -110,6 +117,104 @@ public class TreeBranch : MonoBehaviour
         float y = (float)yRaw * MapManager.GetMapScale() * MapManager.GetMapDistance();
         return new Vector3(x, 0, y);
     }
+
+
+
+
+    public void linkRoom(GameObject givenRoomObject, int path)                      //laufe den Pfad und erstelle am Ende den Raum
+    {
+        if (path == 0)                  //Pfad ist gelaufen
+        {
+            room = givenRoomObject;
+            linked = true;
+        }
+        else if (path != 0)             //Pfad nicht abgelaufen
+        {
+
+            if (path % 10 == 1)          //wohin geht der Pfad?
+            {
+                if (upperLeft != null)   //ist da schon ein branch?
+                {
+                    upperLeft.linkRoom(givenRoomObject, path);
+                }
+            }
+            else if (path % 10 == 2)
+            {
+                if (upperRight != null)   //ist da schon ein branch?
+                {
+                    upperRight.linkRoom(givenRoomObject, path);
+                }
+            }
+            else if (path % 10 == 3)
+            {
+                if (lowerLeft != null)   //ist da schon ein branch?
+                {
+                    lowerLeft.linkRoom(givenRoomObject, path);
+                }
+            }
+            else if (path % 10 == 4)
+            {
+                if (lowerRight != null)   //ist da schon ein branch?
+                {
+                    lowerRight.linkRoom(givenRoomObject, path);
+                }
+            }
+
+
+        }
+    }
+
+
+    public int destroyAllLinkedRooms()
+    {
+        if (linked)
+        {
+            Object.Destroy(room);
+            room = null;
+            linked = false;
+        }
+        //has linked? -> destroy
+
+        int expectedReturns = 0;
+        int recievedReturns = 0;
+
+        int rValue = 0;
+
+        if(upperLeft != null)
+        {
+            expectedReturns++;
+            recievedReturns = recievedReturns + upperLeft.destroyAllLinkedRooms();
+        }
+        if(upperRight != null)
+        {
+            expectedReturns++;
+            recievedReturns = recievedReturns + upperRight.destroyAllLinkedRooms();
+        }
+        if(lowerLeft != null)
+        {
+            expectedReturns++;
+            recievedReturns = recievedReturns + lowerLeft.destroyAllLinkedRooms();
+        }
+        if (lowerRight != null) 
+        {
+            expectedReturns++;
+            recievedReturns = recievedReturns + lowerRight.destroyAllLinkedRooms();
+        }
+
+        if(recievedReturns == expectedReturns)
+        {
+            upperLeft = null;
+            upperRight = null;
+            lowerLeft = null;
+            lowerRight = null;
+            rValue = 1;
+        }
+
+
+        return rValue;
+    }
+
+
 
 
 }
