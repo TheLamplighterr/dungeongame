@@ -16,7 +16,7 @@ public class PotionProjectile : MonoBehaviour
     [Header("Schadens-Einstellungen")]
     [Tooltip("Wie viel Schaden macht der Trank bei der Explosion?")]
     [SerializeField] private int potionDamage = 40;
-    [Tooltip("Der Radius der Explosion. Alle Gegner im Radius erleiden Schaden.")]
+    [Tooltip("Der Radius der Explosion. Alle Objekte im Radius erleiden Schaden / werden aktiviert.")]
     [SerializeField] private float explosionRadius = 3.5f;
     [Tooltip("Der Layer, auf dem deine Gegner liegen.")]
     [SerializeField] private LayerMask enemyLayer;
@@ -42,8 +42,6 @@ public class PotionProjectile : MonoBehaviour
         Quaternion spawnRotation = Quaternion.LookRotation(contact.normal);
 
         // 1. AUFPRAALL-SOUND SPIELEN
-        // PlayClipAtPoint erstellt ein temporäres Audio-Objekt an der Stelle des Einschlags,
-        // sodass der Sound sauber zu Ende spielt, selbst wenn der Trank in der nächsten Zeile zerstört wird!
         if (impactSound != null)
         {
             AudioSource.PlayClipAtPoint(impactSound, spawnPosition, soundVolume);
@@ -56,7 +54,7 @@ public class PotionProjectile : MonoBehaviour
             Destroy(vfxInstance, 3f);
         }
 
-        // 3. FLÄCHENSCHADEN AN GEGNER VERTEILEN
+        // 3. FLÄCHENSCHADEN AN GEGNER, ZIELSCHAIBEN & SCHALTER VERTEILEN
         DealExplosionDamage(spawnPosition);
 
         // 4. TRANK-PREFAB LÖSCHEN
@@ -65,24 +63,43 @@ public class PotionProjectile : MonoBehaviour
 
     private void DealExplosionDamage(Vector3 explosionPoint)
     {
-        // Findet alle Collider im Explosionsradius, die auf dem Gegner-Layer liegen
+        // A) GEGNER IM ENEMY-LAYER PRÜFEN
         Collider[] hitEnemies = Physics.OverlapSphere(explosionPoint, explosionRadius, enemyLayer);
-
         foreach (Collider enemyCollider in hitEnemies)
         {
-            // Sucht erst direkt auf dem getroffenen Collider nach dem EnemyHealth-Skript
             EnemyHealth enemy = enemyCollider.GetComponent<EnemyHealth>();
-            
-            // Falls es dort nicht liegt (z.B. weil der Collider auf einem Child-Objekt ist), sucht es im Parent
-            if (enemy == null)
-            {
-                enemy = enemyCollider.GetComponentInParent<EnemyHealth>();
-            }
+            if (enemy == null) enemy = enemyCollider.GetComponentInParent<EnemyHealth>();
             
             if (enemy != null)
             {
                 enemy.TakeDamage(potionDamage);
-                Debug.Log($"[Potion-Einschlag] {enemyCollider.name} hat {potionDamage} Schaden erlitten!");
+                Debug.Log($"[Potion-Einschlag] Gegner {enemyCollider.name} hat {potionDamage} Schaden erlitten!");
+            }
+        }
+
+        // B) ALLE COLLIDER IM RADIUS FÜR ZIELSCHAIBEN & SCHALTER PRÜFEN (Layer-unabhängig)
+        Collider[] allHits = Physics.OverlapSphere(explosionPoint, explosionRadius);
+        foreach (Collider hit in allHits)
+        {
+            // 1. Zerstörbares Ziel prüfen
+            DestroyableTarget destroyable = hit.GetComponent<DestroyableTarget>();
+            if (destroyable == null) destroyable = hit.GetComponentInParent<DestroyableTarget>();
+
+            if (destroyable != null)
+            {
+                destroyable.TakeDamage(potionDamage);
+                Debug.Log($"[Potion-Einschlag] Zielscheibe {hit.name} getroffen!");
+                continue;
+            }
+
+            // 2. Kristall-Schalter (z. B. an Decke/Wand) prüfen
+            CrystalSwitch crystal = hit.GetComponent<CrystalSwitch>();
+            if (crystal == null) crystal = hit.GetComponentInParent<CrystalSwitch>();
+
+            if (crystal != null)
+            {
+                crystal.TakeDamage(potionDamage);
+                Debug.Log($"[Potion-Einschlag] Kristall-Schalter {hit.name} aktiviert!");
             }
         }
     }

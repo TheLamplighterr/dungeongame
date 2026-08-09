@@ -62,7 +62,6 @@ public class PlayerAttack : MonoBehaviour
 
     private IEnumerator DamageBoostCoroutine(int boostAmount, float duration)
     {
-        // Addiert den Boost auf den AKTUELLEN (evt. bereits permanent erhöhten) Schaden
         int previousDamage = lightAttackDamage;
         lightAttackDamage += boostAmount;
         
@@ -80,14 +79,13 @@ public class PlayerAttack : MonoBehaviour
             damageBoostParticles.Stop();
         }
 
-        // Setzt exakt auf den Wert vor dem temporären Boost zurück
         lightAttackDamage = previousDamage;
         Debug.Log($"[Damage Boost] Vorbei! Schaden wieder auf: {lightAttackDamage}");
         currentBoostCoroutine = null;
     }
 
     // =========================================================
-    // PERMANENTER BOOST (Rüstung / Amulett / Ausrüstung) - NEU!
+    // PERMANENTER BOOST (Rüstung / Amulett / Ausrüstung)
     // =========================================================
     public void AddPermanentDamage(int boostAmount)
     {
@@ -96,7 +94,7 @@ public class PlayerAttack : MonoBehaviour
 
         if (damageBoostParticles != null)
         {
-            damageBoostParticles.Play(); // Zeigt kurz Partikel als Feedback
+            damageBoostParticles.Play();
         }
 
         Debug.Log($"[Dauerhafter Boost] Schaden dauerhaft um {boostAmount} erhöht! Neugrundschaden: {lightAttackDamage}");
@@ -199,15 +197,19 @@ public class PlayerAttack : MonoBehaviour
         canAttack = true;
     }
 
+    // =========================================================
+    // MELEE TREFFERLOGIK (Gegner, Zielscheiben & Schalter)
+    // =========================================================
     void DealMeleeDamage(float range, int damage)
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, range);
-        bool hitEnemy = false;
+        bool hitSomething = false;
         
         foreach (Collider hit in hits)
         {
             if (hit.gameObject == gameObject) continue;
 
+            // 1. Gegner prüfen
             EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
             if (enemy == null) enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy == null) enemy = hit.GetComponentInChildren<EnemyHealth>();
@@ -215,12 +217,36 @@ public class PlayerAttack : MonoBehaviour
             if (enemy != null)
             {
                 enemy.TakeDamage(damage);
-                hitEnemy = true;
-                Debug.Log($"[Nahkampf] {hit.name} erfolgreich getroffen! {damage} Schaden verursacht.");
+                hitSomething = true;
+                Debug.Log($"[Nahkampf] Gegner {hit.name} getroffen! {damage} Schaden.");
+                continue;
+            }
+
+            // 2. Zerstörbares Ziel prüfen
+            DestroyableTarget destroyable = hit.GetComponent<DestroyableTarget>();
+            if (destroyable == null) destroyable = hit.GetComponentInParent<DestroyableTarget>();
+
+            if (destroyable != null)
+            {
+                destroyable.TakeDamage(damage);
+                hitSomething = true;
+                Debug.Log($"[Nahkampf] Zielscheibe {hit.name} getroffen!");
+                continue;
+            }
+
+            // 3. Kristall-Schalter prüfen
+            CrystalSwitch crystal = hit.GetComponent<CrystalSwitch>();
+            if (crystal == null) crystal = hit.GetComponentInParent<CrystalSwitch>();
+
+            if (crystal != null)
+            {
+                crystal.TakeDamage(damage);
+                hitSomething = true;
+                Debug.Log($"[Nahkampf] Kristall-Schalter {hit.name} aktiviert!");
             }
         }
 
-        if (hitEnemy && audioSource != null && attackHitSound != null)
+        if (hitSomething && audioSource != null && attackHitSound != null)
         {
             audioSource.PlayOneShot(attackHitSound);
         }
