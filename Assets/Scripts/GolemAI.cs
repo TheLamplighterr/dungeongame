@@ -13,6 +13,10 @@ public class GolemAI : BaseEnemyAI
     public float attackHitTime = 1.0f;
     public float attackCooldown = 1.5f;
 
+    [Header("Distance Settings")]
+    [Tooltip("Ab diesem Abstand hält der Golem an, um nicht in den Spieler reinzudrücken")]
+    public float stopDistanceToPlayer = 3.0f;
+
     [Header("Idle Timeout")]
     [Tooltip("Wie lange der Golem ungestört im Idle sein muss, bis die Boss-UI verschwindet")]
     public float idleTimeBeforeCancelUI = 3.0f;
@@ -39,6 +43,19 @@ public class GolemAI : BaseEnemyAI
             agent.speed = moveSpeed;
     }
 
+    protected void Start()
+    {
+        // Automatisch den Spieler in der Szene über den Tag suchen (für Prefabs)
+        if (player == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p != null)
+            {
+                player = p.transform;
+            }
+        }
+    }
+
     private void OnDisable()
     {
         StopAllCoroutines();
@@ -48,6 +65,16 @@ public class GolemAI : BaseEnemyAI
 
     protected override void Update()
     {
+        // Fallback: Falls der Spieler verzögert/später gespawnt wird
+        if (player == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p != null)
+            {
+                player = p.transform;
+            }
+        }
+
         base.Update();
 
         if (player != null && agent != null && agent.enabled && enemyHealth != null && enemyHealth.currentHealth > 0)
@@ -109,6 +136,35 @@ public class GolemAI : BaseEnemyAI
         if (isAttacking || animator == null)
             return;
 
+        if (player != null && agent != null && agent.isOnNavMesh)
+        {
+            float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+
+            // Wenn wir in Schlagreichweite sind, überlassen wir der BaseEnemyAI den Angriff
+            if (distanceToPlayer <= attackRange)
+            {
+                return;
+            }
+
+            // Stoppen außerhalb der Attack-Range verhindern
+            if (distanceToPlayer <= stopDistanceToPlayer)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+
+                if (currentAnimation != "Idle")
+                {
+                    currentAnimation = "Idle";
+                    animator.CrossFade("Golem_Idle", 0.2f);
+                }
+                return;
+            }
+            else
+            {
+                agent.isStopped = false;
+            }
+        }
+
         if (currentAnimation != "Walk")
         {
             currentAnimation = "Walk";
@@ -129,7 +185,6 @@ public class GolemAI : BaseEnemyAI
         if (isAttacking)
             return;
 
-        currentAnimation = "Attack";
         StartCoroutine(AttackRoutine());
     }
 
@@ -151,34 +206,50 @@ public class GolemAI : BaseEnemyAI
         isAttacking = true;
         canAct = false;
 
-        agent.isStopped = true;
-        agent.ResetPath();
+        // Movement hart stoppen
+        if (agent != null && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+            agent.ResetPath();
+        }
 
-        // 1. Angriffsanimation abspielen
+        // Drehung zum Spieler ausrichten
+        if (player != null)
+        {
+            Vector3 lookPos = player.position - transform.position;
+            lookPos.y = 0;
+            if (lookPos != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(lookPos);
+            }
+        }
+
+        currentAnimation = "Attack";
+
+        // Angriffsanimation abspielen
         if (animator != null)
             animator.Play("Golem_Attack", 0, 0f);
 
-        // 2. Warten bis zum Trefferzeitpunkt
+        // Treffer-Zeitpunkt abwarten
         yield return new WaitForSeconds(attackHitTime);
 
-        // 3. Treffer ausführen
+        // Treffer ausführen
         SpawnImpact();
 
         if (enemyDamage != null)
             enemyDamage.DealDamage();
 
-        // --- JETZT NEU: SOFORT INS IDLE WECHSELN ---
-        // So bewegt/atmet der Golem während des Cooldowns flüssig, anstatt einzufrieren!
+        // Übergang ins Idle
         if (animator != null)
         {
             currentAnimation = "Idle";
-            animator.CrossFade("Golem_Idle", 0.2f); // Smooth Übergang
+            animator.CrossFade("Golem_Idle", 0.2f);
         }
 
-        // 4. Cooldown-Zeit abwarten (Golem befindet sich bereits im Idle)
+        // Cooldown abwarten
         yield return new WaitForSeconds(attackCooldown);
 
-        agent.isStopped = false;
         isAttacking = false;
         canAct = true;
     }

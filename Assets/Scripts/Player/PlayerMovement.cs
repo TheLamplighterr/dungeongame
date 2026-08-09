@@ -10,9 +10,14 @@ public class PlayerMovement : MonoBehaviour
     
     [Header("Springen & Doppelsprung")]
     [SerializeField] private float jumpHeight = 1.5f;
-    [SerializeField] private int maxJumps = 2; // NEU: 2 für Doppelsprung (3 für Dreifachsprung usw.)
+    [SerializeField] private int maxJumps = 2;
     [SerializeField] private KeyCode jumpKey = KeyCode.Space;
     [SerializeField] private KeyCode sprintKey = KeyCode.LeftShift;
+
+    [Header("Knockback Settings")]
+    [Tooltip("Wie schnell der Knockback sich nach einem Treffer abbaut")]
+    [SerializeField] private float knockbackDamping = 5f;
+    private Vector3 impactVelocity; // Speichert die verbleibende Knockback-Kraft
 
     [Header("VFX (Speed Lines)")]
     [SerializeField] private ParticleSystem speedLinesParticles;
@@ -30,7 +35,6 @@ public class PlayerMovement : MonoBehaviour
     private Transform mainCameraTransform;
     private Vector3 velocity;
 
-    // NEU: Hält nach, wie viele Sprünge in der Luft noch übrig sind
     private int jumpsRemaining;
 
     void Start()
@@ -51,7 +55,6 @@ public class PlayerMovement : MonoBehaviour
             speedLinesParticles.Stop();
         }
 
-        // Zu Beginn die verbleibenden Sprünge initialisieren
         jumpsRemaining = maxJumps;
     }
 
@@ -64,7 +67,6 @@ public class PlayerMovement : MonoBehaviour
             {
                 velocity.y = -2f;
             }
-            // NEU: Sobald wir auf dem Boden stehen, setzen wir die Sprünge zurück
             jumpsRemaining = maxJumps;
         }
 
@@ -122,26 +124,39 @@ public class PlayerMovement : MonoBehaviour
                 }
             }
 
-            // --- SPRINGEN (ANGEPASST FÜR DOPPELSPRUNG) ---
+            // --- SPRINGEN ---
             if (Input.GetKeyDown(jumpKey) && jumpsRemaining > 0)
             {
-                // Setzt die Vertikalgeschwindigkeit komplett zurück, damit der zweite Sprung 
-                // in der Luft den gleichen "Punch" hat wie der erste (egal wie schnell man fällt)
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-                
-                // Einen Sprung abziehen
                 jumpsRemaining--;
             }
 
-            // Rotation steuern
             HandleRotation(moveDirection);
         }
 
         HandleSpeedLinesVFX(shouldPlayVFX);
 
-        // 3. Schwerkraft anwenden
+        // --- 3. KNOCKBACK BERECHNEN & ANWENDEN ---
+        if (impactVelocity.magnitude > 0.2f)
+        {
+            controller.Move(impactVelocity * Time.deltaTime);
+            // Lässt den Knockback flüssig abklingen
+            impactVelocity = Vector3.Lerp(impactVelocity, Vector3.zero, Time.deltaTime * knockbackDamping);
+        }
+
+        // 4. Schwerkraft anwenden
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+    }
+
+    /// <summary>
+    /// Fügt dem Spieler eine Stosskraft in eine bestimmte Richtung hinzu.
+    /// </summary>
+    public void ApplyKnockback(Vector3 direction, float force)
+    {
+        direction.y = 0.1f; // Minimaler Upward-Bounce für besseres Treffergefühl
+        direction.Normalize();
+        impactVelocity = direction * force;
     }
 
     private void HandleSpeedLinesVFX(bool play)

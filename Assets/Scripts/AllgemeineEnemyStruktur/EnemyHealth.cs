@@ -178,42 +178,49 @@ public class EnemyHealth : MonoBehaviour
         enemyRenderer.material.color = originalColor;
     }
 
-    void Die()
+   void Die()
+{
+    isDead = true;
+
+    if (RunStatsManager.Instance != null)
+        RunStatsManager.Instance.AddKill();
+
+    SpawnDeathEffect();
+
+    // 1. NEU: Benachrichtige die PoisonPlant-Komponente (falls vorhanden)
+    if (TryGetComponent(out PoisonPlant plant))
     {
-        isDead = true;
-
-        if (RunStatsManager.Instance != null)
-            RunStatsManager.Instance.AddKill();
-
-        SpawnDeathEffect();
-
-        if (TryGetComponent(out Collider col))
-            col.enabled = false;
-
-        if (TryGetComponent(out Rigidbody rb))
-            rb.isKinematic = true;
-
-        if (TryGetComponent(out UnityEngine.AI.NavMeshAgent agent))
-            agent.isStopped = true;
-
-        MonoBehaviour ai = GetComponent<BaseEnemyAI>();
-        if (ai != null)
-            ai.enabled = false;
-
-        if (animator != null && !string.IsNullOrEmpty(deathAnimation))
-        {
-            animator.CrossFade(deathAnimation, 0.1f);
-            Destroy(gameObject, deathAnimationLength);
-        }
-        else
-        {
-            foreach (var r in GetComponentsInChildren<Renderer>())
-                r.enabled = false;
-
-            Destroy(gameObject, 2f);
-        }
+        plant.PlayDeathAnimation();
     }
 
+    // Physikalische Komponenten ausschalten
+    if (TryGetComponent(out Collider col))
+        col.enabled = false;
+
+    if (TryGetComponent(out Rigidbody rb))
+        rb.isKinematic = true;
+
+    if (TryGetComponent(out UnityEngine.AI.NavMeshAgent agent))
+        agent.isStopped = true;
+
+    MonoBehaviour ai = GetComponent<BaseEnemyAI>();
+    if (ai != null)
+        ai.enabled = false;
+
+    // 2. Animiere & Zerstöre das Objekt
+    // Wenn PoisonPlant die Todesanimation verwaltet, übernimmt diese das Abspielen
+    if (animator != null && !string.IsNullOrEmpty(deathAnimation))
+    {
+        animator.CrossFade(deathAnimation, 0.1f);
+        Destroy(gameObject, deathAnimationLength);
+    }
+    else
+    {
+        // Falls keine extra Todesanimation im Health-Skript definiert ist,
+        // geben wir der Pflanze etwas Zeit für ihre eigene Animation vor dem Destroy
+        Destroy(gameObject, deathAnimationLength > 0 ? deathAnimationLength : 3f);
+    }
+}
     void SpawnDeathEffect()
     {
         if (deathEffectPrefab == null)
