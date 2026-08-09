@@ -19,6 +19,12 @@ public class PlayerAttack : MonoBehaviour
     [Header("Visuelle Effekte")]
     [Tooltip("Ziehe hier das Partikelsystem für den Schadensboost rein")]
     [SerializeField] private ParticleSystem damageBoostParticles;
+    
+    [Header("Angriffs-VFX (Slash / Kratzer)")]
+    [Tooltip("Das Partikel-/VFX-Prefab für den Kratz- / Schwung-Effekt")]
+    [SerializeField] private GameObject slashVFXPrefab;
+    [Tooltip("Optional: Transform vor dem Spieler, wo der Effekt erscheinen soll (wenn leer, wird es automatisch vor dem Spieler berechnet)")]
+    [SerializeField] private Transform slashSpawnPoint;
 
     [Header("Audio (Angriff)")]
     [SerializeField] private AudioSource audioSource;
@@ -186,6 +192,9 @@ public class PlayerAttack : MonoBehaviour
             animator.SetTrigger("LightAttack");
         }
 
+        // --- SLASH / KRATZ VFX SPAWNEN ---
+        SpawnSlashVFX();
+
         if (audioSource != null && attackSwingSound != null)
         {
             audioSource.PlayOneShot(attackSwingSound);
@@ -195,6 +204,25 @@ public class PlayerAttack : MonoBehaviour
 
         yield return new WaitForSeconds(attackCooldown);
         canAttack = true;
+    }
+
+    private void SpawnSlashVFX()
+    {
+        if (slashVFXPrefab == null) return;
+
+        // Position bestimmen: Entweder vom festgelegten SpawnPoint oder 1.2m vor der Spieler-Brust
+        Vector3 spawnPosition = slashSpawnPoint != null 
+            ? slashSpawnPoint.position 
+            : transform.position + transform.forward * 1.2f + Vector3.up * 1.0f;
+
+        Quaternion spawnRotation = slashSpawnPoint != null 
+            ? slashSpawnPoint.rotation 
+            : transform.rotation;
+
+        GameObject vfxInstance = Instantiate(slashVFXPrefab, spawnPosition, spawnRotation);
+        
+        // Löscht den erzeugten Effekt nach 1.5 Sekunden wieder aus der Szene
+        Destroy(vfxInstance, 1.5f);
     }
 
     // =========================================================

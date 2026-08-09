@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,14 +10,29 @@ public class BossUI : MonoBehaviour
     [SerializeField] private GameObject bossUIContainer; 
     [SerializeField] private Slider bossHealthSlider;
 
+    [Header("Musik-Einstellungen")]
+    [Tooltip("Exakter Name des Boss-Tracks in der MusicLibrary")]
+    [SerializeField] private string bossMusicTrackName = "BossTheme";
+    [Tooltip("Exakter Name des Sieg-Jingles in der MusicLibrary")]
+    [SerializeField] private string victoryMusicTrackName = "VictoryJingle";
+    [Tooltip("Exakter Name der normalen Dungeon-Musik in der MusicLibrary")]
+    [SerializeField] private string normalMusicTrackName = "DungeonTheme";
+    
+    [Header("Zeiten")]
+    [Tooltip("Verzögerung in Sekunden, bevor der Sieges-Jingle nach dem Tod startet")]
+    [SerializeField] private float victoryDelay = 2.0f;
+    [Tooltip("Dauer des Sieges-Jingles in Sekunden")]
+    [SerializeField] private float victoryMusicDuration = 4.0f;
+
     private EnemyHealth activeBoss;
+    private bool isFightActive = false;
+    private bool isDefeated = false;
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            Debug.Log("[BOSS-UI] Singleton erfolgreich initialisiert.");
         }
         else
         {
@@ -26,76 +42,101 @@ public class BossUI : MonoBehaviour
 
     private void Start()
     {
-        // Zu Beginn unsichtbar machen
         if (bossUIContainer != null)
         {
             bossUIContainer.SetActive(false);
-            Debug.Log("[BOSS-UI] Container beim Start ausgeblendet.");
-        }
-        else
-        {
-            Debug.LogError("[BOSS-UI] FEHLER: Kein 'bossUIContainer' im Inspector zugewiesen!");
         }
     }
 
-    public void StartBossFight(EnemyHealth boss)
+    public void StartBossFight(EnemyHealth boss = null)
     {
-        activeBoss = boss;
-        
+        if (isDefeated) return;
+
+        if (boss != null && boss != activeBoss)
+        {
+            if (activeBoss != null) activeBoss.OnHit -= UpdateHealthSlider;
+            activeBoss = boss;
+            activeBoss.OnHit += UpdateHealthSlider;
+        }
+
+        isFightActive = true;
+
         if (bossUIContainer != null)
         {
             bossUIContainer.SetActive(true);
-            Debug.Log($"[BOSS-UI] Container wurde für {boss.gameObject.name} AKTIVIERT!");
-        }
-        else
-        {
-            Debug.LogError("[BOSS-UI] Aktivierung fehlgeschlagen: Kein Container zugewiesen!");
         }
 
-        if (activeBoss != null)
+        UpdateHealthSlider();
+
+        // Boss-Musik starten
+        if (MusicManager.Instance != null && !string.IsNullOrEmpty(bossMusicTrackName))
         {
-            activeBoss.OnHit += UpdateBossUI;
-            
-            // WICHTIG: Sofort befüllen, damit der Balken von Sekunde 1 an voll (100%) angezeigt wird!
-            if (bossHealthSlider != null)
-            {
-                bossHealthSlider.minValue = 0f;
-                bossHealthSlider.maxValue = 1f;
-                
-                // Berechne den aktuellen Prozentsatz (sollte am Start 1.0f sein)
-                float healthPercentage = (float)activeBoss.currentHealth / (float)activeBoss.maxHealth;
-                bossHealthSlider.value = healthPercentage;
-            }
+            MusicManager.Instance.PlayMusic(bossMusicTrackName, 1.0f);
         }
     }
 
-    private void UpdateBossUI()
+    private void UpdateHealthSlider()
     {
         if (activeBoss == null || bossHealthSlider == null) return;
 
-        // Präzise Prozentberechnung
         float healthPercentage = (float)activeBoss.currentHealth / (float)activeBoss.maxHealth;
         bossHealthSlider.value = Mathf.Clamp01(healthPercentage);
 
-        Debug.Log($"[BOSS-UI] Slider aktualisiert auf: {bossHealthSlider.value * 100f}%");
-
-        if (activeBoss.currentHealth <= 0)
+        // Sobald KP <= 0 sind: Event SOFORT deabonnieren und nur 1x die Coroutine starten!
+        if (activeBoss.currentHealth <= 0 && !isDefeated)
         {
-            Invoke(nameof(EndBossFight), 2f);
+            isDefeated = true; // Sofort blockieren
+            activeBoss.OnHit -= UpdateHealthSlider; // Event abmelden, damit kein 2. Hit reinkommen kann!
+            StartCoroutine(VictorySequence());
         }
     }
-    private void EndBossFight()
+
+    private IEnumerator VictorySequence()
     {
-        if (activeBoss != null)
+        isFightActive = false;
+
+        // 1. Warten (Verzögerung nach dem Tod, z. B. 2 Sekunden)
+        yield return new WaitForSeconds(victoryDelay);
+
+        Debug.Log("[BOSS-UI] Boss besiegt! Spiele Victory-Jingle...");
+
+        // 2. Victory Jingle genau einmal starten
+        if (MusicManager.Instance != null && !string.IsNullOrEmpty(victoryMusicTrackName))
         {
-            activeBoss.OnHit -= UpdateBossUI;
+            MusicManager.Instance.PlayMusic(victoryMusicTrackName, 0.2f);
         }
-        
-        activeBoss = null;
+
+        // 3. Warten bis Jingle zu Ende gespielt wurde
+        yield return new WaitForSeconds(victoryMusicDuration);
+
+        // 4. UI ausblenden
+        if (bossUIContainer != null)
+        {
+            bossUIContainer.SetActive(false);
+        }
+
+        // 5. Zurück zur Dungeon-Musik
+        if (MusicManager.Instance != null && !string.IsNullOrEmpty(normalMusicTrackName))
+        {
+            MusicManager.Instance.PlayMusic(normalMusicTrackName, 1.5f);
+        }
+    }
+
+    public void CancelBossFight()
+    {
+        if (!isFightActive || isDefeated) return;
+
+        isFightActive = false;
 
         if (bossUIContainer != null)
         {
             bossUIContainer.SetActive(false);
+        }
+
+        // Zurück zur Dungeon-Musik
+        if (MusicManager.Instance != null && !string.IsNullOrEmpty(normalMusicTrackName))
+        {
+            MusicManager.Instance.PlayMusic(normalMusicTrackName, 1.0f);
         }
     }
 
@@ -103,7 +144,7 @@ public class BossUI : MonoBehaviour
     {
         if (activeBoss != null)
         {
-            activeBoss.OnHit -= UpdateBossUI;
+            activeBoss.OnHit -= UpdateHealthSlider;
         }
     }
 }

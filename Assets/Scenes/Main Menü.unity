@@ -4586,6 +4586,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: MusicManager
       objectReference: {fileID: 0}
+    - target: {fileID: 4731296540916895289, guid: 6fdec3bd80ee7ed4188c4a005d639eb8, type: 3}
+      propertyPath: tracks.Array.size
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 4731296540916895289, guid: 6fdec3bd80ee7ed4188c4a005d639eb8, type: 3}
+      propertyPath: tracks.Array.data[5].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 826bb8ea4939f9340ba3d55e1120eb1f, type: 3}
+    - target: {fileID: 4731296540916895289, guid: 6fdec3bd80ee7ed4188c4a005d639eb8, type: 3}
+      propertyPath: tracks.Array.data[6].clip
+      value: 
+      objectReference: {fileID: 8300000, guid: 84ee46357ef5bcf498d572c2b099d3b5, type: 3}
+    - target: {fileID: 4731296540916895289, guid: 6fdec3bd80ee7ed4188c4a005d639eb8, type: 3}
+      propertyPath: tracks.Array.data[5].trackName
+      value: Boss Theme
+      objectReference: {fileID: 0}
+    - target: {fileID: 4731296540916895289, guid: 6fdec3bd80ee7ed4188c4a005d639eb8, type: 3}
+      propertyPath: tracks.Array.data[6].trackName
+      value: Victory Jingle
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

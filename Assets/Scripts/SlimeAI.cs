@@ -22,13 +22,22 @@ public class SlimeAI : BaseEnemyAI
         enemyDamage = GetComponent<EnemyDamage>();
     }
 
+    // NEU: Bricht Angriffe sofort ab, sobald der Slime stirbt / deaktiviert wird!
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+        isAttacking = false;
+        canAct = false;
+    }
+
     protected override void Idle()
     {
         base.Idle();
 
         if (isAttacking) return;
 
-        animator.CrossFade("Slime_Idle_BAKED", 0.1f);
+        if (animator != null)
+            animator.CrossFade("Slime_Idle_BAKED", 0.1f);
     }
 
     protected override void Chase()
@@ -36,9 +45,9 @@ public class SlimeAI : BaseEnemyAI
         base.Chase();
 
         if (isAttacking) return;
-        
 
-        animator.CrossFade("Slime_Idle_BAKED", 0.1f);
+        if (animator != null)
+            animator.CrossFade("Slime_Idle_BAKED", 0.1f);
     }
 
     protected override void Attack()
@@ -55,24 +64,35 @@ public class SlimeAI : BaseEnemyAI
         isAttacking = true;
         canAct = false;
 
-        agent.isStopped = true;
-        agent.ResetPath();
+        if (agent != null && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+        }
 
-        animator.Play("Slime_JumpStart_BAKED", 0, 0f);
+        if (animator != null)
+            animator.Play("Slime_JumpStart_BAKED", 0, 0f);
+        
         yield return new WaitForSeconds(0.3f);
 
-        animator.Play("Slime_JumpLoop_BAKED", 0, 0f);
+        if (animator != null)
+            animator.Play("Slime_JumpLoop_BAKED", 0, 0f);
+
         yield return new WaitForSeconds(1.7f);
 
+        // Schaden nur austeilen, wenn die Komponente noch aktiv ist!
         SpawnImpact();
 
-        if (enemyDamage != null)
+        if (enemyDamage != null && enemyDamage.enabled)
             enemyDamage.DealDamage();
 
-        animator.Play("Slime_JumpEnd_BAKED", 0, 0f);
+        if (animator != null)
+            animator.Play("Slime_JumpEnd_BAKED", 0, 0f);
+
         yield return new WaitForSeconds(0.3f);
 
-        animator.Play("Slime_Idle_BAKED");
+        if (animator != null)
+            animator.Play("Slime_Idle_BAKED");
 
         yield return new WaitForSeconds(1f);
 
@@ -86,7 +106,6 @@ public class SlimeAI : BaseEnemyAI
             return;
 
         Vector3 spawnPos = impactPoint != null ? impactPoint.position : transform.position;
-
         spawnPos += Vector3.up * 0.2f;
 
         GameObject fx = Instantiate(

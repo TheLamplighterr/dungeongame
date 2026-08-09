@@ -1,66 +1,79 @@
 using UnityEngine;
 using System.Collections;
 
-public class StoneGolemAI : BaseEnemyAI
+public class GolemAI : BaseEnemyAI
 {
     public Animator animator;
 
     private EnemyDamage enemyDamage;
-    private EnemyHealth enemyHealth; // NEU: Referenz auf die eigene Lebenskomponente
+    private EnemyHealth enemyHealth;
 
     [Header("Boss Settings")]
     public float moveSpeed = 2f;
     public float attackHitTime = 1.0f;
     public float attackCooldown = 1.5f;
 
+    [Header("Idle Timeout")]
+    [Tooltip("Wie lange der Golem ungestört im Idle sein muss, bis die Boss-UI verschwindet")]
+    public float idleTimeBeforeCancelUI = 3.0f;
+
     [Header("Impact")]
     public GameObject impactEffect;
     public Transform impactPoint;
 
     private bool isAttacking;
-    private bool hasTriggeredBossUI = false; // NEU: Verhindert mehrfaches Triggern
+    private bool hasTriggeredBossUI = false;
+    private Coroutine cancelUICoroutine;
 
-    // Speichert die aktuell laufende Animation, um Spamming zu verhindern
     private string currentAnimation = "";
 
     protected override void Awake()
     {
         base.Awake();
 
-        // Sucht den Animator im Kind-Objekt (dem Golem-Modell)
         animator = GetComponentInChildren<Animator>();
         enemyDamage = GetComponent<EnemyDamage>();
-        enemyHealth = GetComponent<EnemyHealth>(); // NEU: Holt sich das EnemyHealth-Skript
+        enemyHealth = GetComponent<EnemyHealth>();
 
         if (agent != null)
             agent.speed = moveSpeed;
     }
 
-    // Wir klinken uns in Update ein, um die UI zu aktivieren, sobald der Kampf losgeht
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+        isAttacking = false;
+        canAct = false;
+    }
+
     protected override void Update()
     {
         base.Update();
 
-        // NEU: Sobald der Golem den Spieler sieht (nicht mehr im Idle ist), 
-        // aktivieren wir die Boss-UI auf dem Bildschirm!
-        if (!hasTriggeredBossUI && player != null && agent != null && agent.enabled)
+        if (player != null && agent != null && agent.enabled && enemyHealth != null && enemyHealth.currentHealth > 0)
         {
             float distance = Vector3.Distance(transform.position, player.position);
-            if (distance <= sightRange)
+
+            if (!hasTriggeredBossUI && distance <= sightRange)
             {
                 TriggerBossFightUI();
             }
         }
     }
 
-    // NEU: Aktiviert die Boss-UI über das BossUI-Singleton
     private void TriggerBossFightUI()
     {
+        if (cancelUICoroutine != null)
+        {
+            StopCoroutine(cancelUICoroutine);
+            cancelUICoroutine = null;
+        }
+
         if (BossUI.Instance != null && enemyHealth != null)
         {
             BossUI.Instance.StartBossFight(enemyHealth);
             hasTriggeredBossUI = true;
-            Debug.Log($"[BOSS-AI] Bosskampf-UI für {gameObject.name} erfolgreich gestartet!");
+            Debug.Log($"[BOSS-AI] Bosskampf-UI für {gameObject.name} gestartet!");
         }
     }
 
@@ -71,11 +84,15 @@ public class StoneGolemAI : BaseEnemyAI
         if (isAttacking || animator == null)
             return;
 
-        // Spielt CrossFade nur ab, wenn nicht schon im Idle-Zustand 
         if (currentAnimation != "Idle")
         {
             currentAnimation = "Idle";
             animator.CrossFade("Golem_Idle", 0.1f);
+        }
+
+        if (hasTriggeredBossUI && cancelUICoroutine == null)
+        {
+            cancelUICoroutine = StartCoroutine(CancelUIAfterIdleDelay());
         }
     }
 
@@ -83,10 +100,15 @@ public class StoneGolemAI : BaseEnemyAI
     {
         base.Chase();
 
+        if (cancelUICoroutine != null)
+        {
+            StopCoroutine(cancelUICoroutine);
+            cancelUICoroutine = null;
+        }
+
         if (isAttacking || animator == null)
             return;
 
-        // Spielt CrossFade nur ab, wenn wir nicht schon im Laufen-Zustand sind
         if (currentAnimation != "Walk")
         {
             currentAnimation = "Walk";
@@ -98,12 +120,30 @@ public class StoneGolemAI : BaseEnemyAI
     {
         base.Attack();
 
+        if (cancelUICoroutine != null)
+        {
+            StopCoroutine(cancelUICoroutine);
+            cancelUICoroutine = null;
+        }
+
         if (isAttacking)
             return;
 
-        // Setzt den String auf Attack, damit Idle/Walk während der Coroutine blockiert werden
         currentAnimation = "Attack";
         StartCoroutine(AttackRoutine());
+    }
+
+    private IEnumerator CancelUIAfterIdleDelay()
+    {
+        yield return new WaitForSeconds(idleTimeBeforeCancelUI);
+
+        if (BossUI.Instance != null)
+        {
+            BossUI.Instance.CancelBossFight();
+        }
+
+        hasTriggeredBossUI = false;
+        cancelUICoroutine = null;
     }
 
     IEnumerator AttackRoutine()
@@ -114,28 +154,31 @@ public class StoneGolemAI : BaseEnemyAI
         agent.isStopped = true;
         agent.ResetPath();
 
+        // 1. Angriffsanimation abspielen
         if (animator != null)
             animator.Play("Golem_Attack", 0, 0f);
 
-        // Zeitpunkt, an dem der Schlag treffen soll
+        // 2. Warten bis zum Trefferzeitpunkt
         yield return new WaitForSeconds(attackHitTime);
 
+        // 3. Treffer ausführen
         SpawnImpact();
 
         if (enemyDamage != null)
             enemyDamage.DealDamage();
 
-        // Rest der Animation abwarten
-        yield return new WaitForSeconds(attackCooldown);
-
+        // --- JETZT NEU: SOFORT INS IDLE WECHSELN ---
+        // So bewegt/atmet der Golem während des Cooldowns flüssig, anstatt einzufrieren!
         if (animator != null)
         {
-            currentAnimation = "Idle"; // Setzt den Zustand zurück auf Idle
-            animator.Play("Golem_Idle", 0, 0f);
+            currentAnimation = "Idle";
+            animator.CrossFade("Golem_Idle", 0.2f); // Smooth Übergang
         }
 
-        agent.isStopped = false;
+        // 4. Cooldown-Zeit abwarten (Golem befindet sich bereits im Idle)
+        yield return new WaitForSeconds(attackCooldown);
 
+        agent.isStopped = false;
         isAttacking = false;
         canAct = true;
     }
