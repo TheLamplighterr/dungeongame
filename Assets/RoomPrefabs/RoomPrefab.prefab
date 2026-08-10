@@ -1138,7 +1138,7 @@ MonoBehaviour:
   deathVfxScale: 2
   animator: {fileID: 0}
   deathAnimation: 
-  deathAnimationLength: 2
+  deathAnimationLength: 0
 --- !u!114 &453276698319622841
 MonoBehaviour:
   m_ObjectHideFlags: 0
