@@ -6,6 +6,7 @@ using UnityEngine;
 public class MapManager : MonoBehaviour
 {
     public TreeBranch Quadtree;
+    public RoomCollection roomCollection;
 
     private int maxSpielfeldX = 7;
     private int maxSpielfeldY = 7;
@@ -40,6 +41,16 @@ public class MapManager : MonoBehaviour
     public MapManager GetMapManager()
     {
         return this;
+    }
+
+    public TreeBranch GetQuadTree()
+    {
+        return this.Quadtree;
+    }
+
+    public RoomCollection GetRoomCollection() 
+    { 
+        return roomCollection;
     }
 
     //level boundaries

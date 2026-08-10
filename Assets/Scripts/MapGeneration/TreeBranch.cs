@@ -1,9 +1,19 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class TreeBranch : MonoBehaviour
 {
     public MapManager mapManager;
     public RoomCollection roomCollection;
+
+    private void Awake()
+    {
+        if (mapManager == null)
+        {
+            mapManager = FindObjectOfType<MapManager>();
+            roomCollection = mapManager.GetRoomCollection();
+        }
+    }
 
     public TreeBranch GetTreeBranch()
     {
@@ -23,6 +33,7 @@ public class TreeBranch : MonoBehaviour
     public TreeBranch lowerRight = null;
 
     public GameObject room = null;              //beim spielfeld zugewiesener Raum
+    public RoomInit roomInit;
 
     public TreeBranch(int layer, MapManager mapmanager, RoomCollection roomcollection)        //make a new tree 
     {
@@ -44,18 +55,22 @@ public class TreeBranch : MonoBehaviour
         if (dir == 1)
         {
             upperLeft = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
+            //upperLeft = this.AddComponent(new TreeBranch())
         }
         else if (dir == 2)
         {
             upperRight = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
+            //upperRight = this.AddComponent<TreeBranch>();
         }
         else if (dir == 3)
         {
             lowerLeft = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
+            //lowerLeft = this.AddComponent<TreeBranch>();
         }
         else if (dir == 4)
         {
             lowerRight = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
+            //lowerRight = this.AddComponent<TreeBranch>();
         }
     }
 
@@ -121,11 +136,14 @@ public class TreeBranch : MonoBehaviour
 
 
 
-    public void linkRoom(GameObject givenRoomObject, int path)                      //laufe den Pfad und erstelle am Ende den Raum
+    public void linkRoom(GameObject givenRoomObject, RoomInit givenRoomInit, int path)                      //laufe den Pfad und erstelle am Ende den Raum
     {
+        //Debug.Log("linkRequest recieved: " + path);
         if (path == 0)                  //Pfad ist gelaufen
         {
             room = givenRoomObject;
+            roomInit = givenRoomInit;
+            Debug.Log("Linked " + givenRoomObject.name + " to quadtree");
             linked = true;
         }
         else if (path != 0)             //Pfad nicht abgelaufen
@@ -135,28 +153,32 @@ public class TreeBranch : MonoBehaviour
             {
                 if (upperLeft != null)   //ist da schon ein branch?
                 {
-                    upperLeft.linkRoom(givenRoomObject, path);
+                    Debug.Log("UL");
+                    upperLeft.linkRoom(givenRoomObject, givenRoomInit, path / 10);
                 }
             }
             else if (path % 10 == 2)
             {
                 if (upperRight != null)   //ist da schon ein branch?
                 {
-                    upperRight.linkRoom(givenRoomObject, path);
+                    Debug.Log("UR");
+                    upperRight.linkRoom(givenRoomObject, givenRoomInit, path / 10);
                 }
             }
             else if (path % 10 == 3)
             {
                 if (lowerLeft != null)   //ist da schon ein branch?
                 {
-                    lowerLeft.linkRoom(givenRoomObject, path);
+                    Debug.Log("BL");
+                    lowerLeft.linkRoom(givenRoomObject, givenRoomInit, path / 10);
                 }
             }
             else if (path % 10 == 4)
             {
                 if (lowerRight != null)   //ist da schon ein branch?
                 {
-                    lowerRight.linkRoom(givenRoomObject, path);
+                    Debug.Log("BR");
+                    lowerRight.linkRoom(givenRoomObject, givenRoomInit, path / 10);
                 }
             }
 
@@ -169,11 +191,14 @@ public class TreeBranch : MonoBehaviour
     {
         if (linked)
         {
-            Object.Destroy(room);
+            //Object.Destroy(room);
+            roomInit.destroySelf();
+            Debug.Log("ExecutedSelfDestroy");
+            roomInit = null;
             room = null;
             linked = false;
         }
-        //has linked? -> destroy
+        
 
         int expectedReturns = 0;
         int recievedReturns = 0;

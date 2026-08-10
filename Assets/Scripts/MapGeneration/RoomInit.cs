@@ -22,7 +22,7 @@ public class RoomInit : MonoBehaviour
     private void importantSetup()
     {
         mapManager = FindObjectOfType<MapManager>();
-        branch = FindObjectOfType<TreeBranch>();
+        branch = mapManager.GetQuadTree();
 
         mainTransform = Me.transform;
     }
@@ -46,7 +46,7 @@ public class RoomInit : MonoBehaviour
 
     private void linkToTree()
     {
-        branch.linkRoom(Me, path);
+        branch.linkRoom(Me, this, path);
     }
 
     private void applyopenings()
@@ -55,19 +55,23 @@ public class RoomInit : MonoBehaviour
         {
             if (openings[0] == 1)
             {
-                opening1.SetActive(false);
+                if(opening1 != null)
+                    opening1.SetActive(false);
             }
             if (openings[1] == 1)
             {
-                opening2.SetActive(false);
+                if (opening2 != null)
+                    opening2.SetActive(false);
             }
             if (openings[2] == 1)
             {
-                opening3.SetActive(false);
+                if (opening3 != null)
+                    opening3.SetActive(false);
             }
             if (openings[3] == 1)
             {
-                opening4.SetActive(false);
+                if (opening4 != null)
+                    opening4.SetActive(false);
             }
         }
         else { Debug.Log("openings array null or wrong :/"); }
@@ -86,6 +90,11 @@ public class RoomInit : MonoBehaviour
         applyopenings();
 
 
+    }
+
+    public void destroySelf()
+    {
+        GameObject.Destroy(Me);
     }
     
 }
