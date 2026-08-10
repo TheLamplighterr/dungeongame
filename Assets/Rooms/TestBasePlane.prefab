@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6715562790102725301}
   - component: {fileID: 1305586421366319610}
   - component: {fileID: 1956338876373394652}
+  - component: {fileID: 7315034389846899959}
   m_Layer: 0
   m_Name: TestBasePlane
   m_TagString: Untagged
@@ -112,3 +113,27 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &7315034389846899959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2051560339278910390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a8fd3da029df9f48b13af96b2fdad88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomInit
+  mapManager: {fileID: 0}
+  branch: {fileID: 0}
+  simpleX: 0
+  simpleY: 0
+  Me: {fileID: 2051560339278910390}
+  opening1: {fileID: 0}
+  opening2: {fileID: 0}
+  opening3: {fileID: 0}
+  opening4: {fileID: 0}
+  mainTransform: {fileID: 0}
+  path: 0
+  openings: 

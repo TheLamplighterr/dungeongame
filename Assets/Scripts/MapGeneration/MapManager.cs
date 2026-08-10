@@ -790,10 +790,16 @@ public class MapManager : MonoBehaviour
 
     */
 
+    void easyFixToEndMySuffering()
+    {
+        foreach(RoomInit ri in FindObjectsOfType<RoomInit>())
+            ri.destroySelf();
+    }
 
     public void generateNewLevel()
     {
         resetLists();
+        easyFixToEndMySuffering();
         if(Quadtree.destroyAllLinkedRooms() == 1)
         {
             generateSimpleMap();

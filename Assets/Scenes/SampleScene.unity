@@ -14575,6 +14575,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MapManager
   Quadtree: {fileID: 1673605469}
+  roomCollection: {fileID: 0}
   spawnField: 0000000000000000
   spawnRoomCount: 1
   poiCount: 5
@@ -14596,7 +14597,7 @@ MonoBehaviour:
   connectorRooms:
   - {fileID: 6303766856751736948, guid: 4e2dfa5e61989874eb6ad154dc8fa54d, type: 3}
   spawnRooms:
-  - {fileID: 4318727135850453802, guid: 20917c64740462844aa37a673db2c9ef, type: 3}
+  - {fileID: 2051560339278910390, guid: 6c159470e5d5bec428106fd9f1de95d6, type: 3}
   poiRooms:
   - {fileID: 6203517282151148659, guid: d9528186685c848438d1df3f5e35f582, type: 3}
   - {fileID: 3419999619533457432, guid: ea7e50125c559504985516c40d80905f, type: 3}
@@ -14628,6 +14629,7 @@ MonoBehaviour:
   lowerLeft: {fileID: 0}
   lowerRight: {fileID: 0}
   room: {fileID: 0}
+  roomInit: {fileID: 0}
 --- !u!1 &1677128194
 GameObject:
   m_ObjectHideFlags: 0

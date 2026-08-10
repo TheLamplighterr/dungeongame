@@ -55,22 +55,42 @@ public class TreeBranch : MonoBehaviour
         if (dir == 1)
         {
             upperLeft = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
-            //upperLeft = this.AddComponent(new TreeBranch())
+            /*
+            GameObject branchPart = new GameObject();
+            branchPart.AddComponent<TreeBranch>();
+            upperLeft = branchPart.GetComponent<TreeBranch>();
+            upperLeft = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
+            */
         }
         else if (dir == 2)
         {
             upperRight = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
-            //upperRight = this.AddComponent<TreeBranch>();
+            /*
+            GameObject branchPart = new GameObject();
+            branchPart.AddComponent<TreeBranch>();
+            upperRight = branchPart.GetComponent<TreeBranch>();
+            upperRight = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
+            */
         }
         else if (dir == 3)
         {
             lowerLeft = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
-            //lowerLeft = this.AddComponent<TreeBranch>();
+            /*
+            GameObject branchPart = new GameObject();
+            branchPart.AddComponent<TreeBranch>();
+            lowerLeft = branchPart.GetComponent<TreeBranch>();
+            lowerLeft = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
+            */
         }
         else if (dir == 4)
         {
             lowerRight = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
-            //lowerRight = this.AddComponent<TreeBranch>();
+            /*
+            GameObject branchPart = new GameObject();
+            branchPart.AddComponent<TreeBranch>();
+            lowerRight = branchPart.GetComponent<TreeBranch>();
+            lowerRight = new TreeBranch(this.layer + 1, this.mapManager, this.roomCollection);
+            */
         }
     }
 
@@ -205,20 +225,36 @@ public class TreeBranch : MonoBehaviour
 
         int rValue = 0;
 
-        if(upperLeft != null)
+        if (lowerLeft == null)
+        {
+            createNewBranch(1);
+        }
+        if (upperLeft != null)
         {
             expectedReturns++;
             recievedReturns = recievedReturns + upperLeft.destroyAllLinkedRooms();
         }
-        if(upperRight != null)
+        if (lowerLeft == null)
+        {
+            createNewBranch(2);
+        }
+        if (upperRight != null)
         {
             expectedReturns++;
             recievedReturns = recievedReturns + upperRight.destroyAllLinkedRooms();
         }
-        if(lowerLeft != null)
+        if (lowerLeft == null)
+        {
+            createNewBranch(3);
+        }
+        if (lowerLeft != null)
         {
             expectedReturns++;
             recievedReturns = recievedReturns + lowerLeft.destroyAllLinkedRooms();
+        }
+        if (lowerLeft == null)
+        {
+            createNewBranch(4);
         }
         if (lowerRight != null) 
         {
