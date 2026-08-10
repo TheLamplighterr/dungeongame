@@ -123,7 +123,7 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
-    void Die()
+   void Die()
     {
         if (isDead) return;
 
@@ -131,6 +131,17 @@ public class PlayerHealth : MonoBehaviour
 
         Debug.Log("PLAYER DIED");
 
+        // 1. Run-Statistiken beenden & als Highscore speichern!
+        if (RunStatsManager.Instance != null)
+        {
+            RunStatsManager.Instance.EndRun();
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ RunStatsManager.Instance ist NULL beim Sterben!");
+        }
+
+        // 2. Game Over UI anzeigen
         if (gameOverUI != null)
         {
             gameOverUI.ShowGameOver();

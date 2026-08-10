@@ -1,17 +1,16 @@
 using System;
+using System.Collections.Generic;
 
 [Serializable]
 public class RunData
 {
     public int totalScore;
-    public string dateTimeString; // z.B. "03.08.2026 20:15"
+    public string dateTimeString;
     
-    // Details für die Ansicht beim Anklicken
     public int enemiesKilled;
     public float playTimeInSeconds;
     public int highestFloor;
     
-    // System-ID zur Erkennung des neusten Runs
     public string runID;
 
     public RunData(int score, int enemies, float playTime, int floor)
@@ -29,5 +28,6 @@ public class RunData
 [Serializable]
 public class HighscoreListWrapper
 {
-    public System.Collections.Generic.List<RunData> runs = new System.Collections.Generic.List<RunData>();
+    public List<RunData> runs = new List<RunData>();
+    public RunData lastRun; // <-- JETZT NEU: Der allerletzte Run wird hier dauerhaft in der JSON gespeichert!
 }

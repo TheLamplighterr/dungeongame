@@ -12,6 +12,12 @@ public class HighscoreUI : MonoBehaviour
     public GameObject extraRunContainer;
     public HighscoreEntryUI extraRunEntry;
 
+    [Header("Layout Einstellungen")]
+    [Tooltip("Höhe eines einzelnen Eintrags in Pixeln")]
+    public float itemHeight = 50f;
+    [Tooltip("Der gewünschte Abstand zwischen zwei Einträgen")]
+    public float itemSpacing = 15f;
+
     [Header("Detail Panel References")]
     public GameObject detailPanel;
     public TMP_Text detailScoreText;
@@ -57,7 +63,11 @@ public class HighscoreUI : MonoBehaviour
 
     public void RefreshBoard()
     {
-        if (HighscoreManager.Instance == null || tableParent == null) return;
+        if (HighscoreManager.Instance == null || tableParent == null) 
+        {
+            Debug.LogWarning("⚠️ [HighscoreUI] HighscoreManager oder TableParent fehlt!");
+            return;
+        }
 
         // 1. Alte Einträge löschen
         foreach (Transform child in tableParent)
@@ -69,31 +79,73 @@ public class HighscoreUI : MonoBehaviour
         RunData latest = HighscoreManager.Instance.LatestRun;
         bool latestInTop5 = false;
 
-        // 2. Top 5 erzeugen
+        if (latest != null)
+        {
+            Debug.Log($"📊 [HighscoreUI] Letzter Run geladen: Score {latest.totalScore} | ID: {latest.runID}");
+        }
+        else
+        {
+            Debug.Log("ℹ️ [HighscoreUI] Keinen 'LatestRun' in der Datei/Memory gefunden.");
+        }
+
+        // 2. Top 5 erzeugen und positionieren
         for (int i = 0; i < topRuns.Count; i++)
         {
             RunData run = topRuns[i];
             if (entryPrefab == null) continue;
 
             HighscoreEntryUI entry = Instantiate(entryPrefab, tableParent);
-            bool isLatest = (latest != null && run.runID == latest.runID);
+            
+            // Exakter ID-Vergleich für Hervorhebung
+            bool isLatest = (latest != null && !string.IsNullOrEmpty(latest.runID) && run.runID == latest.runID);
 
-            if (isLatest) latestInTop5 = true;
+            if (isLatest) 
+            {
+                latestInTop5 = true;
+            }
+
+            // Manuelle Positionierung
+            RectTransform rect = entry.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(0.5f, 1f);
+                rect.anchorMax = new Vector2(0.5f, 1f);
+                rect.pivot = new Vector2(0.5f, 1f);
+
+                float yPos = -i * (itemHeight + itemSpacing);
+                rect.anchoredPosition = new Vector2(0, yPos);
+            }
 
             entry.Setup(i + 1, run, isLatest, this);
         }
 
-        // 3. Extra Run Zeile falls nicht unter den Top 5
+        // 3. Gesamthöhe des Eltern-Containers anpassen
+        RectTransform parentRect = tableParent.GetComponent<RectTransform>();
+        if (parentRect != null && topRuns.Count > 0)
+        {
+            float totalHeight = (topRuns.Count * itemHeight) + ((topRuns.Count - 1) * itemSpacing);
+            parentRect.sizeDelta = new Vector2(parentRect.sizeDelta.x, totalHeight);
+        }
+
+        // 4. Extra Run Zeile rendern (falls nicht unter den Top 5)
         if (extraRunContainer != null && extraRunEntry != null)
         {
             if (latest != null && !latestInTop5)
             {
                 extraRunContainer.SetActive(true);
+                extraRunEntry.gameObject.SetActive(true);
+
                 int rank = HighscoreManager.Instance.GetRunRank(latest);
+                Debug.Log($"🎯 [HighscoreUI] Letzter Run ist nicht in den Top 5 (Rang #{rank}). Zeige Extra-Container.");
+
                 extraRunEntry.Setup(rank, latest, true, this);
             }
             else
             {
+                if (latestInTop5)
+                {
+                    Debug.Log("⭐ [HighscoreUI] Letzter Run befindet sich bereits in den Top 5!");
+                }
                 extraRunContainer.SetActive(false);
             }
         }
@@ -101,7 +153,7 @@ public class HighscoreUI : MonoBehaviour
 
     public void ShowDetails(RunData data)
     {
-        if (detailPanel == null) return;
+        if (detailPanel == null || data == null) return;
 
         // Texte mit den Daten des geklickten Runs füllen
         if (detailScoreText) detailScoreText.text = "Score: " + data.totalScore.ToString("N0");

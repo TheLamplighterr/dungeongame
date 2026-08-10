@@ -6,13 +6,14 @@ public class RunStatsManager : MonoBehaviour
 
     [Header("Run Stats")]
     public int enemiesKilled;
-    public int dungeonDepth;
+    public int dungeonDepth = 1;
     public float runTime;
 
     private bool runActive = true;
 
-    [Header("Score")]
-    public int currentScore;
+    // --- AUTOMATISCHER SCORE ---
+    // Berechnet den Score dynamisch, sobald irgendwer 'currentScore' abfragt!
+    public int currentScore => CalculateScore();
 
     private void Awake()
     {
@@ -33,27 +34,11 @@ public class RunStatsManager : MonoBehaviour
         {
             runTime += Time.deltaTime;
         }
-         // DEBUG TEST
-         if (Input.GetKeyDown(KeyCode.P))
-        {
-        enemiesKilled += 3;
-        dungeonDepth = 2;
-
-        currentScore = CalculateScore();
-
-        Debug.Log("TEST SCORE: " + currentScore);
-        if (HighscoreManager.Instance != null)
-    {
-        HighscoreManager.Instance.AddRun(currentScore, enemiesKilled, runTime, dungeonDepth);
-        Debug.Log("✅ Test-Run erfolgreich gespeichert!");
-    }
-        }
     }
 
     public void AddKill()
     {
         enemiesKilled++;
-        Debug.Log("Enemy killed! Total Kills: " + enemiesKilled);
     }
 
     public void SetDepth(int depth)
@@ -61,19 +46,30 @@ public class RunStatsManager : MonoBehaviour
         dungeonDepth = depth;
     }
 
+    public void UpdateCurrentLevel(int newLevel)
+    {
+        dungeonDepth = newLevel;
+    }
+
+    public int CalculateScore()
+    {
+        int killScore = enemiesKilled * 150;
+        int depthScore = dungeonDepth * 1000;
+        
+        // Zeitbonus (2000 Startpunkte, -2 Punkte pro Sekunde)
+        int baseTimeBonus = 2000;
+        int timePenalty = Mathf.FloorToInt(runTime * 2f);
+        int timeScore = Mathf.Max(0, baseTimeBonus - timePenalty);
+
+        return killScore + depthScore + timeScore;
+    }
+
     public void EndRun()
     {
         runActive = false;
 
-        currentScore = CalculateScore();
+        Debug.Log($"=== RUN ENDET === Score: {currentScore} | Kills: {enemiesKilled} | Zeit: {GetFormattedTime()} | Tiefe: {dungeonDepth}");
 
-        Debug.Log("=== RUN ENDET ===");
-        Debug.Log("Score: " + currentScore);
-        Debug.Log("Kills: " + enemiesKilled);
-        Debug.Log("Zeit: " + GetFormattedTime());
-        Debug.Log("Tiefe: " + dungeonDepth);
-
-        // Hier wird der Highscore direkt beim Beenden des Runs automatisch gesichert!
         if (HighscoreManager.Instance != null)
         {
             HighscoreManager.Instance.AddRun(currentScore, enemiesKilled, runTime, dungeonDepth);
@@ -84,7 +80,6 @@ public class RunStatsManager : MonoBehaviour
     {
         int minutes = Mathf.FloorToInt(runTime / 60);
         int seconds = Mathf.FloorToInt(runTime % 60);
-
         return $"{minutes:00}:{seconds:00}";
     }
 
@@ -94,21 +89,5 @@ public class RunStatsManager : MonoBehaviour
         dungeonDepth = 1;
         runTime = 0;
         runActive = true;
-    }
-
-    public int CalculateScore()
-    {
-        int score = 0;
-
-        // Kills sind wichtig
-        score += enemiesKilled * 100;
-
-        // Tiefe ist sehr wichtig
-        score += dungeonDepth * 500;
-
-        // Zeitbonus (je schneller desto besser)
-        score += Mathf.Max(0, 1000 - Mathf.FloorToInt(runTime));
-
-        return score;
     }
 }

@@ -11,7 +11,7 @@ public class MapManager : MonoBehaviour
     private int maxSpielfeldX = 7;
     private int maxSpielfeldY = 7;
 
-    //übersichtsvariablen
+    //ï¿½bersichtsvariablen
     private static int emptyField = 0;     //const
     private static int connectorRoom = 1;  //const
     private static int spawnRoom = 2;      //const
@@ -27,7 +27,7 @@ public class MapManager : MonoBehaviour
     //einstellungen
     public int[] spawnField = { 0, 0 }; //hier ist der startbereich des Spielers auf deisem level
     public int spawnRoomCount = 1;      //const
-    public int poiCount = 2;            //let       Points of interrest (ereignissräume)
+    public int poiCount = 2;            //let       Points of interrest (ereignissrï¿½ume)
     public int treasureRoomCount = 1;   //let       
     public int bossRoomCount = 1;       //const
 
@@ -75,7 +75,7 @@ public class MapManager : MonoBehaviour
                             simpleMap[givenX][givenY][3], simpleMap[givenX][givenY][4]};
     }
 
-    List<int[]> roomList = new List<int[]>()        //liste aller aktiven räume mit position und verweis
+    List<int[]> roomList = new List<int[]>()        //liste aller aktiven rï¿½ume mit position und verweis
         {
             new int[4]{spawnRoom,0,0,0}         //type ID X Y
         };
@@ -88,11 +88,11 @@ public class MapManager : MonoBehaviour
     {
         if (roomList.Count > givenID && givenID >= 0)       //wenn der gesuchte raum in der liste ist
         {
-            return new int[] { roomList[givenID][2], roomList[givenID][3]};     //gib den x und y wert zurück
+            return new int[] { roomList[givenID][2], roomList[givenID][3]};     //gib den x und y wert zurï¿½ck
         }
         else
         {
-            return new int[] { -5, -5 };            //sonst default zu -5/-5 (außerhalb der map)
+            return new int[] { -5, -5 };            //sonst default zu -5/-5 (auï¿½erhalb der map)
         }
     }
 
@@ -115,7 +115,7 @@ public class MapManager : MonoBehaviour
     //[x][y][2] =   verbindung rechts ->    0 = zu sonst offen
     //[x][y][3] =   verindung unten \/      0 = zu sonst offen
     //[x][y][4] =   verbindung links <-     0 = zu sonst offen
-    //[x][y][5] =   Placeholder (zusätzliche Eigenschaften)     //placeholder für leichteren quad tree verweis? (bsp: 143 -> In bereich 1 von bereich 4 von bereich 3)
+    //[x][y][5] =   Placeholder (zusï¿½tzliche Eigenschaften)     //placeholder fï¿½r leichteren quad tree verweis? (bsp: 143 -> In bereich 1 von bereich 4 von bereich 3)
     int[][][] simpleMap = resetSimpleMap();
     //apply map to quadtree
     //deatroy/create
@@ -250,7 +250,7 @@ public class MapManager : MonoBehaviour
         createConnectionPaths();
 
 
-        //translateToQuadTree   (quadtree leaves mit räumen füllen)
+        //translateToQuadTree   (quadtree leaves mit rï¿½umen fï¿½llen)
         for (int i = 0; i < roomList.Count; i++) 
         {
             InitialiseRoomFromList(i);
@@ -286,7 +286,7 @@ public class MapManager : MonoBehaviour
                     roomList.Add(new int[] { art, roomList.Count, x, y });
 
                     bool stairsFound = false;                                    //in welche richtung vom boss raum kommen treppen?
-                    int tempRandom = randomI(0, 4);                         //random start für varianz
+                    int tempRandom = randomI(0, 4);                         //random start fï¿½r varianz
                     for (int i = 0;i< 4 && !stairsFound; i++)           //falls blockiert (bsp durch spawn raum -> drehen bis frei)
                     {
                         if (((tempRandom + i) % 4) + 1 == 1 && simpleMap[x][y - 1][0] == 0)         //oben versuchen
@@ -326,7 +326,7 @@ public class MapManager : MonoBehaviour
                     return true;    //beenden um nicht doppelt ein zu tragen
                 }
             }
-            simpleMap[x][y][0] = art;       //bei anderen räumen nicht so streng -> platzieren
+            simpleMap[x][y][0] = art;       //bei anderen rï¿½umen nicht so streng -> platzieren
             roomList.Add(new int[] { art, roomList.Count, x, y });
             return true;
         }
@@ -388,7 +388,7 @@ public class MapManager : MonoBehaviour
     void prepareConnections()
     {
         Debug.Log("Preparing MST-Connections");
-        prepareFamilies();      //für jeden zu beachtenden Raum wird ein punkt mit Familie und Verweis erstellt
+        prepareFamilies();      //fï¿½r jeden zu beachtenden Raum wird ein punkt mit Familie und Verweis erstellt
 
         List<int[]> rawConnections = new List<int[]>();
         for (int i = 0; i < families.Count; i++)    //alle Punkte sollen versuchen sich mit allen Punkte zu verbinden
@@ -410,11 +410,11 @@ public class MapManager : MonoBehaviour
         
         rawConnections = filterConnections(rawConnections); //doppelte Verbindungen werden entfernt
 
-        rawConnections = sortConnectionsByWeight(rawConnections);   //Verbindungen werden der Größe nach sortiert
+        rawConnections = sortConnectionsByWeight(rawConnections);   //Verbindungen werden der Grï¿½ï¿½e nach sortiert
 
         int familyCount = 0;
 
-        for (int i = 0; i < rawConnections.Count; i++)  //versuche alle rohen Verbindungen zu bestätigen
+        for (int i = 0; i < rawConnections.Count; i++)  //versuche alle rohen Verbindungen zu bestï¿½tigen
         {
 
             if (families[rawConnections[i][1]][1] == 0 && families[rawConnections[i][2]][1] == 0)   //beide Punkte ohne Familie -> neue erstellen
@@ -798,6 +798,8 @@ public class MapManager : MonoBehaviour
 
     public void generateNewLevel()
     {
+        level++;
+
         resetLists();
         easyFixToEndMySuffering();
         if(Quadtree.destroyAllLinkedRooms() == 1)
@@ -811,7 +813,7 @@ public class MapManager : MonoBehaviour
         GenerateMap();
     }
 
-    // Später für load der raumevents bei nähe
+    // Spï¿½ter fï¿½r load der raumevents bei nï¿½he
     void Update()
     {
         

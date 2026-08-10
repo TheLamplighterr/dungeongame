@@ -11,7 +11,7 @@ public class MapResetTrigger : MonoBehaviour
     [Tooltip("Der exakte Name deines Prompt UI-Objekts in der Scene-Hierarchy")]
     public string uiObjectName = "EndRoomPromptUI";
 
-    [Tooltip("Der exakte Name des schwarzen Fade-Image-Objekts im Canvas")]
+    [Tooltip("Der exakte Name des schwarze Fade-Image-Objekts im Canvas")]
     public string fadeImageName = "ScreenFadeImage";
 
     [Header("Einstellungen für Beenden (Taste F)")]
@@ -87,32 +87,33 @@ public class MapResetTrigger : MonoBehaviour
     }
 
     private void FindScreenFadeImage()
-{
-    Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-    
-    foreach (Canvas canvas in canvases)
     {
-        Transform foundTransform = canvas.transform.Find(fadeImageName);
-        if (foundTransform != null)
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        
+        foreach (Canvas canvas in canvases)
         {
-            screenFadeImage = foundTransform.GetComponent<Image>();
-            break;
+            Transform foundTransform = canvas.transform.Find(fadeImageName);
+            if (foundTransform != null)
+            {
+                screenFadeImage = foundTransform.GetComponent<Image>();
+                break;
+            }
+        }
+
+        if (screenFadeImage != null)
+        {
+            Debug.Log("<color=green>[ScreenFade]</color> Fade Image erfolgreich gefunden!");
+            Color c = screenFadeImage.color;
+            c.a = 0f;
+            screenFadeImage.color = c;
+            screenFadeImage.gameObject.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError($"<color=red>[ScreenFade]</color> Konnte kein Image mit dem Namen '{fadeImageName}' im Canvas finden!");
         }
     }
 
-    if (screenFadeImage != null)
-    {
-        Debug.Log("<color=green>[ScreenFade]</color> Fade Image erfolgreich gefunden!");
-        Color c = screenFadeImage.color;
-        c.a = 0f;
-        screenFadeImage.color = c;
-        screenFadeImage.gameObject.SetActive(true);
-    }
-    else
-    {
-        Debug.LogError($"<color=red>[ScreenFade]</color> Konnte kein Image mit dem Namen '{fadeImageName}' im Canvas finden!");
-    }
-}
     private void FindSpawnPoint()
     {
         Transform root = transform.root;
@@ -255,9 +256,66 @@ public class MapResetTrigger : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sperrt die Bewegungen und Eingaben des Spielers.
+    /// </summary>
+    private void DisablePlayerControls()
+    {
+        if (playerTransform == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null) playerTransform = player.transform;
+        }
+
+        if (playerTransform != null)
+        {
+            // 1. Rigidbody-Geschwindigkeit stoppen (falls vorhanden)
+            Rigidbody rb = playerTransform.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+
+            // 2. Skripte auf dem Spieler deaktivieren (z. B. PlayerController, PlayerMovement etc.)
+            MonoBehaviour[] scripts = playerTransform.GetComponents<MonoBehaviour>();
+            foreach (var script in scripts)
+            {
+                // Deaktiviere deine Movement/Control-Skripte (Erweitere die Namen bei Bedarf)
+                string scriptName = script.GetType().Name.ToLower();
+                if (scriptName.Contains("player") || scriptName.Contains("controller") || scriptName.Contains("movement") || scriptName.Contains("input"))
+                {
+                    script.enabled = false;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reaktiviert die Bewegungen des Spielers für das neue Level.
+    /// </summary>
+    private void EnablePlayerControls()
+    {
+        if (playerTransform != null)
+        {
+            MonoBehaviour[] scripts = playerTransform.GetComponents<MonoBehaviour>();
+            foreach (var script in scripts)
+            {
+                string scriptName = script.GetType().Name.ToLower();
+                if (scriptName.Contains("player") || scriptName.Contains("controller") || scriptName.Contains("movement") || scriptName.Contains("input"))
+                {
+                    script.enabled = true;
+                }
+            }
+        }
+    }
+
     private IEnumerator NextLevelSequence()
     {
         isTransitioning = true;
+
+        // Spieler-Steuerung sofort sperren!
+        DisablePlayerControls();
 
         if (canvasGroup != null)
             StartPromptFade(0f);
@@ -270,21 +328,33 @@ public class MapResetTrigger : MonoBehaviour
 
         yield return new WaitForSeconds(transitionDelay);
 
-        isTransitioning = false;
-
         if (mapManager != null)
         {
+            // 1. Generiert den neuen Floor (erhöht mapManager.level intern um 1)
             mapManager.generateNewLevel();
+
+            // 2. Aktualisiert den Level-Stand im RunStatsManager
+            if (RunStatsManager.Instance != null)
+            {
+                RunStatsManager.Instance.UpdateCurrentLevel(mapManager.level);
+            }
         }
         else
         {
             Debug.LogError("[MapResetTrigger] MapManager wurde in der Szene nicht gefunden!");
         }
+
+        // Steuerung wieder freigeben
+        EnablePlayerControls();
+        isTransitioning = false;
     }
 
     private IEnumerator ExitGameSequence()
     {
         isTransitioning = true;
+
+        // Spieler-Steuerung sofort sperren!
+        DisablePlayerControls();
 
         if (canvasGroup != null)
             StartPromptFade(0f);
@@ -298,6 +368,16 @@ public class MapResetTrigger : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        // --- RUN ENDEN UND HIGHSCORE SPEICHERN ---
+        if (RunStatsManager.Instance != null)
+        {
+            RunStatsManager.Instance.EndRun();
+        }
+        else
+        {
+            Debug.LogWarning("[MapResetTrigger] RunStatsManager.Instance ist NULL! Run konnte nicht gespeichert werden.");
+        }
 
         Debug.Log("[MapResetTrigger] Lade Hauptmenü...");
 
@@ -314,5 +394,4 @@ public class MapResetTrigger : MonoBehaviour
             #endif
         }
     }
-    
 }
