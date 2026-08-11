@@ -16,24 +16,32 @@ public class LamplingAI : BaseEnemyAI
     public string activateState = "Activate";
     public string strikeState = "Strike";
 
+    [Header("Drehung & Animation")]
+    [Tooltip("Normale, gleichmäßige Drehgeschwindigkeit zum Spieler")]
+    public float turnSpeed = 8f;
+
     [Header("Timings & Cooldowns")]
     public float activateDuration = 3.75f;
     public float attackDuration = 1.0f;
 
-    [Tooltip("Zeitpunkt im Schlag, an dem der Schaden zugefügt wird (z. B. 0.4s nach Animationsstart)")]
+    [Tooltip("Zeitpunkt im Schlag, an dem der Schaden zugefügt wird")]
     public float damageTiming = 0.4f;
 
-    public float minAttackCooldown = 1.5f;
-    public float maxAttackCooldown = 3.0f;
+    public float minAttackCooldown = 1.0f;
+    public float maxAttackCooldown = 2.0f;
 
     [Header("Kollisions-Stopp")]
-    [Tooltip("Ab diesem Abstand hält der Lampling an, um nicht in den Spieler reinzulaufen")]
     public float stopDistanceToPlayer = 2f;
 
     private bool isActivating;
     private bool isActivated;
     private bool isAttacking;
     private bool isOnCooldown;
+
+    // Neues Flag: Erlaubt die Drehung bereits kurz nach dem Treffer-Moment
+    private bool canRotateDuringAttack;
+
+    private Quaternion initialRotation;
 
     protected override void Awake()
     {
@@ -42,9 +50,29 @@ public class LamplingAI : BaseEnemyAI
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
 
+        if (animator != null)
+            animator.applyRootMotion = false;
+
         enemyDamage = GetComponent<EnemyDamage>();
         if (enemyDamage == null)
             enemyDamage = GetComponentInChildren<EnemyDamage>();
+
+        if (agent != null)
+        {
+            agent.updateRotation = false;
+            agent.updatePosition = true;
+        }
+    }
+
+    private void Start()
+    {
+        initialRotation = transform.rotation;
+
+        if (agent != null && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+        }
     }
 
     private void OnDisable()
@@ -52,15 +80,80 @@ public class LamplingAI : BaseEnemyAI
         StopAllCoroutines();
         isAttacking = false;
         isActivating = false;
+        isOnCooldown = false;
         canAct = false;
+        canRotateDuringAttack = false;
+    }
+
+    protected override void Update()
+    {
+        if (agent != null && agent.updateRotation)
+        {
+            agent.updateRotation = false;
+        }
+
+        // 1. SCHLAF- & AUFWACH-PHASE
+        if (!isActivated)
+        {
+            transform.rotation = initialRotation;
+
+            if (agent != null && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+            }
+
+            if (!isActivating && player != null)
+            {
+                float distance = Vector3.Distance(transform.position, player.position);
+                if (distance <= sightRange)
+                {
+                    StartCoroutine(ActivateSequence());
+                }
+            }
+
+            return;
+        }
+
+        // WÄHREND DES ANGRIFFS:
+        // Sobald der Schlag ausgeführt wurde (damageTiming vorbei), darf er sich SOFORT flüssig mitdrehen!
+        if (isAttacking && canRotateDuringAttack)
+        {
+            LookAtPlayerSmooth();
+        }
+
+        // 2. WACH-PHASE
+        base.Update();
+    }
+
+    private IEnumerator ActivateSequence()
+    {
+        isActivating = true;
+        canAct = false;
+
+        PlayAnim(activateState, true);
+
+        yield return new WaitForSeconds(activateDuration);
+
+        isActivated = true;
+        isActivating = false;
+        canAct = true;
+
+        PlayAnim(idleState, true);
+        LookAtPlayerSmooth();
+
+        if (agent != null && agent.isOnNavMesh)
+        {
+            agent.isStopped = false;
+        }
     }
 
     protected override void Idle()
     {
         base.Idle();
-
         if (isAttacking || isActivating) return;
 
+        LookAtPlayerSmooth();
         PlayAnim(idleState);
     }
 
@@ -70,7 +163,6 @@ public class LamplingAI : BaseEnemyAI
 
         if (isAttacking || !isActivated) return;
 
-        // Verhindert das Wegschieben und Reinschieben (exakt wie beim Slime)
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null && agent != null && agent.isOnNavMesh)
         {
@@ -87,62 +179,22 @@ public class LamplingAI : BaseEnemyAI
             }
         }
 
-        LookAtPlayer();
+        LookAtPlayerSmooth();
         PlayAnim(idleState);
-    }
-
-    protected override void Update()
-    {
-        // 1. Aufwach-Phase
-        if (!isActivated)
-        {
-            if (!isActivating && player != null)
-            {
-                float distance = Vector3.Distance(transform.position, player.position);
-                if (distance <= sightRange)
-                {
-                    StartCoroutine(ActivateSequence());
-                }
-            }
-            return;
-        }
-
-        base.Update();
-    }
-
-    private IEnumerator ActivateSequence()
-    {
-        isActivating = true;
-        canAct = false;
-
-        if (agent != null && agent.isOnNavMesh)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
-        PlayAnim(activateState, true);
-
-        yield return new WaitForSeconds(activateDuration);
-
-        PlayAnim(idleState, true);
-        LookAtPlayer();
-
-        isActivated = true;
-        isActivating = false;
-        canAct = true;
-
-        if (agent != null && agent.isOnNavMesh)
-        {
-            agent.isStopped = false;
-        }
     }
 
     protected override void Attack()
     {
         base.Attack();
 
-        if (isAttacking || isOnCooldown || !canAct) return;
+        if (isAttacking || !canAct) return;
+
+        if (isOnCooldown)
+        {
+            LookAtPlayerSmooth();
+            PlayAnim(idleState);
+            return;
+        }
 
         StartCoroutine(AttackRoutine());
     }
@@ -150,9 +202,8 @@ public class LamplingAI : BaseEnemyAI
     private IEnumerator AttackRoutine()
     {
         isAttacking = true;
-        isOnCooldown = true;
+        canRotateDuringAttack = false; // Während dem Ausholen steht die Drehung fest
 
-        // 1. Agent stoppen & ausrichten
         if (agent != null && agent.isOnNavMesh)
         {
             agent.isStopped = true;
@@ -160,13 +211,12 @@ public class LamplingAI : BaseEnemyAI
             agent.velocity = Vector3.zero;
         }
 
-        LookAtPlayer();
+        SnapToPlayer(); // Direkt vor dem Ausführen exakt zum Spieler ausrichten
         PlayAnim(strikeState, true);
 
-        // 2. Warten bis zum Treffer-Moment der Schlag-Animation
+        // 1. Bis zum Schadenspunkt warten
         yield return new WaitForSeconds(damageTiming);
 
-        // 3. Schaden verteilen (Direkter Aufruf an EnemyDamage)
         if (enemyDamage != null && enemyDamage.enabled)
         {
             enemyDamage.DealDamage();
@@ -174,14 +224,23 @@ public class LamplingAI : BaseEnemyAI
 
         SpawnImpact();
 
-        // 4. Restliche Animationszeit abwarten
+        // 2. AB JETZT SCHADEN ERFOLGT: Er darf sich im Ausklingen der Animation bereits wieder mitdrehen!
+        canRotateDuringAttack = true;
+
         float remainingTime = Mathf.Max(0f, attackDuration - damageTiming);
         yield return new WaitForSeconds(remainingTime);
 
+        // Schlag beendet
         PlayAnim(idleState, true);
         isAttacking = false;
+        canRotateDuringAttack = false;
+        isOnCooldown = true;
 
-        // 5. Cooldown
+        if (agent != null && agent.isOnNavMesh)
+        {
+            agent.isStopped = false;
+        }
+
         float currentCooldown = Random.Range(minAttackCooldown, maxAttackCooldown);
         yield return new WaitForSeconds(currentCooldown);
 
@@ -213,17 +272,30 @@ public class LamplingAI : BaseEnemyAI
         }
     }
 
-    private void LookAtPlayer()
+    private void LookAtPlayerSmooth()
     {
         if (player == null) return;
 
         Vector3 dir = (player.position - transform.position);
         dir.y = 0;
 
-        if (dir.sqrMagnitude > 0.1f)
+        if (dir.sqrMagnitude > 0.01f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(dir);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 8f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * turnSpeed);
+        }
+    }
+
+    private void SnapToPlayer()
+    {
+        if (player == null) return;
+
+        Vector3 dir = (player.position - transform.position);
+        dir.y = 0;
+
+        if (dir.sqrMagnitude > 0.01f)
+        {
+            transform.rotation = Quaternion.LookRotation(dir);
         }
     }
 }
