@@ -11,9 +11,9 @@ public class ChestInteractionUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI promptText;
 
     [Header("Item-Benachrichtigung")]
-    [SerializeField] private RectTransform notificationPanel; // Das Pergament-Panel
+    [SerializeField] private RectTransform notificationPanel;
     [SerializeField] private TextMeshProUGUI notificationText;
-    [SerializeField] private float notificationDuration = 3.0f; // Wie lange es stehen bleibt
+    [SerializeField] private float notificationDuration = 3.0f;
 
     [Header("Slide-Einstellungen")]
     [Tooltip("Dauer der Slide-Animation in Sekunden")]
@@ -43,11 +43,9 @@ public class ChestInteractionUI : MonoBehaviour
 
         if (notificationPanel != null)
         {
-            // Richtige Zielposition auf dem Canvas merken
             targetPosition = notificationPanel.anchoredPosition;
             offScreenPosition = new Vector2(targetPosition.x + offScreenOffset, targetPosition.y);
             
-            // Zu Beginn nach links aus dem Bild schieben und deaktivieren
             notificationPanel.anchoredPosition = offScreenPosition;
             notificationPanel.gameObject.SetActive(false);
         }
@@ -70,7 +68,19 @@ public class ChestInteractionUI : MonoBehaviour
         }
     }
 
+    // Normales Pop-up bei Item-Erhalt
     public void ShowItemNotification(string itemName)
+    {
+        TriggerNotification($"{itemName} added to Inventory!");
+    }
+
+    // Hier war der Fehler: Diese Methode hat in deiner Datei gefehlt!
+    public void ShowWarningNotification(string message = "Inventory is full!")
+    {
+        TriggerNotification($"<color=red>{message}</color>");
+    }
+
+    private void TriggerNotification(string textToDisplay)
     {
         if (notificationPanel == null || notificationText == null)
         {
@@ -78,7 +88,7 @@ public class ChestInteractionUI : MonoBehaviour
             return;
         }
 
-        notificationText.text = $"{itemName} added to Inventory!";
+        notificationText.text = textToDisplay;
 
         if (slideCoroutine != null)
         {
@@ -92,23 +102,23 @@ public class ChestInteractionUI : MonoBehaviour
     {
         notificationPanel.gameObject.SetActive(true);
 
-        // --- 1. REINSLIDEN (von links nach rechts) ---
+        // 1. Reinsliden
         float timer = 0f;
         while (timer < slideDuration)
         {
             timer += Time.deltaTime;
             float progress = Mathf.Clamp01(timer / slideDuration);
-            float smoothProgress = Mathf.SmoothStep(0f, 1f, progress); // Macht die Bewegung geschmeidig
+            float smoothProgress = Mathf.SmoothStep(0f, 1f, progress);
 
             notificationPanel.anchoredPosition = Vector2.Lerp(offScreenPosition, targetPosition, smoothProgress);
             yield return null;
         }
         notificationPanel.anchoredPosition = targetPosition;
 
-        // --- 2. ANZEIGEDAUER ---
+        // 2. Warten
         yield return new WaitForSeconds(notificationDuration);
 
-        // --- 3. RAUSSLIDEN (wieder nach links) ---
+        // 3. Rausliden
         timer = 0f;
         while (timer < slideDuration)
         {
