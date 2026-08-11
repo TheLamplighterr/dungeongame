@@ -10,15 +10,19 @@ public class GolemAI : BaseEnemyAI
 
     [Header("Boss Settings")]
     public float moveSpeed = 2f;
+    [Tooltip("Normale Drehgeschwindigkeit beim Laufen")]
+    public float turnSpeed = 5f;
+    [Tooltip("Schnellere Drehgeschwindigkeit im Cooldown/Idle")]
+    public float cooldownTurnSpeed = 14f;
+
     public float attackHitTime = 1.0f;
-    public float attackCooldown = 1.5f;
+    public float attackCooldown = 2.0f;
 
     [Header("Distance Settings")]
     [Tooltip("Ab diesem Abstand hält der Golem an, um nicht in den Spieler reinzudrücken")]
     public float stopDistanceToPlayer = 3.0f;
 
     [Header("Idle Timeout")]
-    [Tooltip("Wie lange der Golem ungestört im Idle sein muss, bis die Boss-UI verschwindet")]
     public float idleTimeBeforeCancelUI = 3.0f;
 
     [Header("Impact")]
@@ -26,6 +30,7 @@ public class GolemAI : BaseEnemyAI
     public Transform impactPoint;
 
     private bool isAttacking;
+    private bool isOnCooldown;
     private bool hasTriggeredBossUI = false;
     private Coroutine cancelUICoroutine;
 
@@ -35,24 +40,34 @@ public class GolemAI : BaseEnemyAI
     {
         base.Awake();
 
-        animator = GetComponentInChildren<Animator>();
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
+
+        if (animator != null)
+            animator.applyRootMotion = false;
+
         enemyDamage = GetComponent<EnemyDamage>();
         enemyHealth = GetComponent<EnemyHealth>();
 
         if (agent != null)
+        {
             agent.speed = moveSpeed;
+            agent.updateRotation = false;
+        }
     }
 
     protected void Start()
     {
-        // Automatisch den Spieler in der Szene über den Tag suchen (für Prefabs)
         if (player == null)
         {
             GameObject p = GameObject.FindGameObjectWithTag("Player");
-            if (p != null)
-            {
-                player = p.transform;
-            }
+            if (p != null) player = p.transform;
+        }
+
+        if (agent != null && agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
         }
     }
 
@@ -60,19 +75,21 @@ public class GolemAI : BaseEnemyAI
     {
         StopAllCoroutines();
         isAttacking = false;
+        isOnCooldown = false;
         canAct = false;
     }
 
     protected override void Update()
     {
-        // Fallback: Falls der Spieler verzögert/später gespawnt wird
         if (player == null)
         {
             GameObject p = GameObject.FindGameObjectWithTag("Player");
-            if (p != null)
-            {
-                player = p.transform;
-            }
+            if (p != null) player = p.transform;
+        }
+
+        if (agent != null && agent.updateRotation)
+        {
+            agent.updateRotation = false;
         }
 
         base.Update();
@@ -100,7 +117,6 @@ public class GolemAI : BaseEnemyAI
         {
             BossUI.Instance.StartBossFight(enemyHealth);
             hasTriggeredBossUI = true;
-            Debug.Log($"[BOSS-AI] Bosskampf-UI für {gameObject.name} gestartet!");
         }
     }
 
@@ -111,11 +127,15 @@ public class GolemAI : BaseEnemyAI
         if (isAttacking || animator == null)
             return;
 
-        if (currentAnimation != "Idle")
+        if (agent != null && agent.isOnNavMesh)
         {
-            currentAnimation = "Idle";
-            animator.CrossFade("Golem_Idle", 0.1f);
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+            if (agent.hasPath) agent.ResetPath();
         }
+
+        LookAtPlayerSmooth(isOnCooldown ? cooldownTurnSpeed : turnSpeed);
+        PlayIdleAnim();
 
         if (hasTriggeredBossUI && cancelUICoroutine == null)
         {
@@ -136,32 +156,37 @@ public class GolemAI : BaseEnemyAI
         if (isAttacking || animator == null)
             return;
 
+        // WÄHREND DES COOLDOWNS: Nicht laufen, sondern im Idle zügig zum Spieler drehen!
+        if (isOnCooldown)
+        {
+            if (agent != null && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+            }
+
+            LookAtPlayerSmooth(cooldownTurnSpeed);
+            PlayIdleAnim();
+            return;
+        }
+
         if (player != null && agent != null && agent.isOnNavMesh)
         {
             float distanceToPlayer = Vector3.Distance(transform.position, player.position);
 
-            // Wenn wir in Schlagreichweite sind, überlassen wir der BaseEnemyAI den Angriff
-            if (distanceToPlayer <= attackRange)
-            {
-                return;
-            }
-
-            // Stoppen außerhalb der Attack-Range verhindern
             if (distanceToPlayer <= stopDistanceToPlayer)
             {
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
 
-                if (currentAnimation != "Idle")
-                {
-                    currentAnimation = "Idle";
-                    animator.CrossFade("Golem_Idle", 0.2f);
-                }
+                LookAtPlayerSmooth(turnSpeed);
+                PlayIdleAnim();
                 return;
             }
             else
             {
                 agent.isStopped = false;
+                LookAtPlayerSmooth(turnSpeed);
             }
         }
 
@@ -180,6 +205,20 @@ public class GolemAI : BaseEnemyAI
         {
             StopCoroutine(cancelUICoroutine);
             cancelUICoroutine = null;
+        }
+
+        // Während des Cooldowns im Idle-State bleiben und mitdrehen
+        if (isOnCooldown)
+        {
+            if (agent != null && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+            }
+
+            LookAtPlayerSmooth(cooldownTurnSpeed);
+            PlayIdleAnim();
+            return;
         }
 
         if (isAttacking)
@@ -204,9 +243,7 @@ public class GolemAI : BaseEnemyAI
     IEnumerator AttackRoutine()
     {
         isAttacking = true;
-        canAct = false;
 
-        // Movement hart stoppen
         if (agent != null && agent.isOnNavMesh)
         {
             agent.isStopped = true;
@@ -214,57 +251,72 @@ public class GolemAI : BaseEnemyAI
             agent.ResetPath();
         }
 
-        // Drehung zum Spieler ausrichten
-        if (player != null)
-        {
-            Vector3 lookPos = player.position - transform.position;
-            lookPos.y = 0;
-            if (lookPos != Vector3.zero)
-            {
-                transform.rotation = Quaternion.LookRotation(lookPos);
-            }
-        }
+        LookAtPlayerInstant();
 
         currentAnimation = "Attack";
 
-        // Angriffsanimation abspielen
         if (animator != null)
             animator.Play("Golem_Attack", 0, 0f);
 
-        // Treffer-Zeitpunkt abwarten
         yield return new WaitForSeconds(attackHitTime);
 
-        // Treffer ausführen
         SpawnImpact();
 
         if (enemyDamage != null)
             enemyDamage.DealDamage();
 
-        // Übergang ins Idle
-        if (animator != null)
-        {
-            currentAnimation = "Idle";
-            animator.CrossFade("Golem_Idle", 0.2f);
-        }
+        PlayIdleAnim(0.2f);
 
-        // Cooldown abwarten
+        // SCHLAG BEENDET: Cooldown beginnt
+        isAttacking = false;
+        isOnCooldown = true;
+
+        // Während dieser Phase steht er im Idle und dreht sich flüssig mit!
         yield return new WaitForSeconds(attackCooldown);
 
-        isAttacking = false;
-        canAct = true;
+        isOnCooldown = false;
+    }
+
+    private void PlayIdleAnim(float fadeTime = 0.1f)
+    {
+        if (currentAnimation != "Idle" && animator != null)
+        {
+            currentAnimation = "Idle";
+            animator.CrossFade("Golem_Idle", fadeTime);
+        }
+    }
+
+    private void LookAtPlayerSmooth(float speed)
+    {
+        if (player == null) return;
+
+        Vector3 dir = (player.position - transform.position);
+        dir.y = 0;
+
+        if (dir.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(dir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * speed);
+        }
+    }
+
+    private void LookAtPlayerInstant()
+    {
+        if (player == null) return;
+
+        Vector3 dir = (player.position - transform.position);
+        dir.y = 0;
+
+        if (dir.sqrMagnitude > 0.01f)
+        {
+            transform.rotation = Quaternion.LookRotation(dir);
+        }
     }
 
     void SpawnImpact()
     {
-        if (impactEffect == null)
-            return;
-
+        if (impactEffect == null) return;
         Vector3 spawnPos = impactPoint != null ? impactPoint.position : transform.position;
-
-        Instantiate(
-            impactEffect,
-            spawnPos,
-            Quaternion.identity
-        );
+        Instantiate(impactEffect, spawnPos, Quaternion.identity);
     }
 }
