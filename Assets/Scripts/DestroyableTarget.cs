@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,8 +13,11 @@ public class DestroyableTarget : MonoBehaviour
     [SerializeField] private AudioClip hitSound;          // Treffer-Sound
     [SerializeField] private GameObject visualsGroup;     // Unterobjekt 'Visuals' (wird verborgen)
 
-    [Header("Optionales Rätsel-Event")]
+    [Header("Optionales Rätsel-Event (Inspector)")]
     public UnityEvent OnTargetDestroyed;
+
+    // Für C#-Code-Abfragen (z. B. TargetClearTrigger)
+    public event Action<DestroyableTarget> OnTargetDestroyedAction;
 
     private bool isDestroyed = false;
 
@@ -48,6 +52,10 @@ public class DestroyableTarget : MonoBehaviour
             Instantiate(destroyVFXPrefab, transform.position, Quaternion.identity);
         }
 
+        // C#-Event für Skripte auslösen
+        OnTargetDestroyedAction?.Invoke(this);
+
+        // UnityEvent für den Inspector auslösen
         OnTargetDestroyed?.Invoke();
 
         // Modell verbergen
