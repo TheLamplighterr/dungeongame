@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Shiny Amulet
   icon: {fileID: 21300000, guid: 807a679130b099a4cbd7f6c81cec819f, type: 3}
-  worldPrefab: {fileID: 1943286446490004412, guid: c2aecc1f265f53049942e7dbdae3c406, type: 3}
+  worldPrefab: {fileID: 1943286446490004412, guid: 7c6be33796006d14fb0fff475038442b, type: 3}
   description: A fancy, big Amulet. Wearing it gives you +20 damage!
   itemType: 4
   value: 20
