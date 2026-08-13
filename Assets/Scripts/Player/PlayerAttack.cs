@@ -7,14 +7,13 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField] private int lightAttackDamage = 20;
     [SerializeField] private float lightAttackRange = 2f;
     [SerializeField] private float attackCooldown = 0.5f;
+    [Tooltip("Verzögerung in Sekunden, bis Schaden und VFX nach Animationsstart auslösen")]
+    [SerializeField] private float attackHitDelay = 0.15f; 
 
     [Header("Zielen & Kameras (Cinemachine)")]
     [SerializeField] private GameObject aimCamera;
     [SerializeField] private GameObject thirdPersonCamera;
     [SerializeField] private GameObject crosshairUI;
-
-    [Header("Animationen")]
-    [SerializeField] private Animator animator;
 
     [Header("Visuelle Effekte")]
     [Tooltip("Ziehe hier das Partikelsystem für den Schadensboost rein")]
@@ -23,14 +22,15 @@ public class PlayerAttack : MonoBehaviour
     [Header("Angriffs-VFX (Slash / Kratzer)")]
     [Tooltip("Das Partikel-/VFX-Prefab für den Kratz- / Schwung-Effekt")]
     [SerializeField] private GameObject slashVFXPrefab;
-    [Tooltip("Optional: Transform vor dem Spieler, wo der Effekt erscheinen soll (wenn leer, wird es automatisch vor dem Spieler berechnet)")]
+    [Tooltip("Optional: Transform vor dem Spieler, wo der Effekt erscheinen soll")]
     [SerializeField] private Transform slashSpawnPoint;
 
     [Header("Audio (Angriff)")]
     [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip attackSwingSound; // Slash / Kratz-Geräusch
-    [SerializeField] private AudioClip attackHitSound;   // Fleisch / Treffer-Geräusch
+    [SerializeField] private AudioClip attackSwingSound; 
+    [SerializeField] private AudioClip attackHitSound;   
 
+    private PlayerAnimationController animController;
     private bool canAttack = true;
     private bool isAiming = false;
     private bool isCombatDisabled = false;
@@ -41,6 +41,13 @@ public class PlayerAttack : MonoBehaviour
     void Awake()
     {
         originalLightAttackDamage = lightAttackDamage;
+        
+        // Findet das Animation-Script zuverlässig
+        animController = GetComponent<PlayerAnimationController>();
+        if (animController == null)
+        {
+            animController = GetComponentInChildren<PlayerAnimationController>();
+        }
 
         if (audioSource == null)
         {
@@ -53,9 +60,6 @@ public class PlayerAttack : MonoBehaviour
         }
     }
 
-    // =========================================================
-    // TEMPORÄRER BOOST (Trank / Potion)
-    // =========================================================
     public void BoostDamage(int boostAmount, float duration)
     {
         if (currentBoostCoroutine != null)
@@ -90,9 +94,6 @@ public class PlayerAttack : MonoBehaviour
         currentBoostCoroutine = null;
     }
 
-    // =========================================================
-    // PERMANENTER BOOST (Rüstung / Amulett / Ausrüstung)
-    // =========================================================
     public void AddPermanentDamage(int boostAmount)
     {
         originalLightAttackDamage += boostAmount;
@@ -151,15 +152,16 @@ public class PlayerAttack : MonoBehaviour
         if (aimCamera != null) aimCamera.SetActive(true);
         if (thirdPersonCamera != null) thirdPersonCamera.SetActive(false);
         if (crosshairUI != null) crosshairUI.SetActive(true);
-        if (animator != null) animator.SetBool("Aim", true);
+        
+        if (animController != null) animController.SetAiming(true);
     }
 
     void ThrowPotion()
     {
-        if (animator != null)
+        if (animController != null)
         {
-            animator.SetBool("Aim", false);
-            animator.SetTrigger("Throw");
+            animController.SetAiming(false);
+            animController.TriggerThrow();
         }
 
         PotionThrower thrower = GetComponent<PotionThrower>();
@@ -181,28 +183,40 @@ public class PlayerAttack : MonoBehaviour
         if (aimCamera != null) aimCamera.SetActive(false);
         if (thirdPersonCamera != null) thirdPersonCamera.SetActive(true);
         if (crosshairUI != null) crosshairUI.SetActive(false);
+
+        if (animController != null) animController.SetAiming(false);
     }
 
     IEnumerator PerformLightAttack()
     {
         canAttack = false;
 
-        if (animator != null)
+        // 1. Animation starten
+        if (animController != null)
         {
-            animator.SetTrigger("LightAttack");
+            animController.TriggerLightAttack();
         }
 
-        // --- SLASH / KRATZ VFX SPAWNEN ---
-        SpawnSlashVFX();
-
+        // 2. Schwung-Sound direkt abspielen
         if (audioSource != null && attackSwingSound != null)
         {
             audioSource.PlayOneShot(attackSwingSound);
         }
 
+        // 3. Kurz warten, bis der Schlag im Schwung ist
+        if (attackHitDelay > 0f)
+        {
+            yield return new WaitForSeconds(attackHitDelay);
+        }
+
+        // 4. VFX erzeugen & Schaden berechnen
+        SpawnSlashVFX();
         DealMeleeDamage(lightAttackRange, lightAttackDamage);
 
-        yield return new WaitForSeconds(attackCooldown);
+        // 5. Verbleibenden Cooldown abwarten
+        float remainingCooldown = Mathf.Max(0f, attackCooldown - attackHitDelay);
+        yield return new WaitForSeconds(remainingCooldown);
+
         canAttack = true;
     }
 
@@ -210,7 +224,6 @@ public class PlayerAttack : MonoBehaviour
     {
         if (slashVFXPrefab == null) return;
 
-        // Position bestimmen: Entweder vom festgelegten SpawnPoint oder 1.2m vor der Spieler-Brust
         Vector3 spawnPosition = slashSpawnPoint != null 
             ? slashSpawnPoint.position 
             : transform.position + transform.forward * 1.2f + Vector3.up * 1.0f;
@@ -220,14 +233,9 @@ public class PlayerAttack : MonoBehaviour
             : transform.rotation;
 
         GameObject vfxInstance = Instantiate(slashVFXPrefab, spawnPosition, spawnRotation);
-        
-        // Löscht den erzeugten Effekt nach 1.5 Sekunden wieder aus der Szene
         Destroy(vfxInstance, 1.5f);
     }
 
-    // =========================================================
-    // MELEE TREFFERLOGIK (Gegner, Zielscheiben & Schalter)
-    // =========================================================
     void DealMeleeDamage(float range, int damage)
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, range);
@@ -237,7 +245,6 @@ public class PlayerAttack : MonoBehaviour
         {
             if (hit.gameObject == gameObject) continue;
 
-            // 1. Gegner prüfen
             EnemyHealth enemy = hit.GetComponent<EnemyHealth>();
             if (enemy == null) enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy == null) enemy = hit.GetComponentInChildren<EnemyHealth>();
@@ -250,7 +257,6 @@ public class PlayerAttack : MonoBehaviour
                 continue;
             }
 
-            // 2. Zerstörbares Ziel prüfen
             DestroyableTarget destroyable = hit.GetComponent<DestroyableTarget>();
             if (destroyable == null) destroyable = hit.GetComponentInParent<DestroyableTarget>();
 
@@ -262,7 +268,6 @@ public class PlayerAttack : MonoBehaviour
                 continue;
             }
 
-            // 3. Kristall-Schalter prüfen
             CrystalSwitch crystal = hit.GetComponent<CrystalSwitch>();
             if (crystal == null) crystal = hit.GetComponentInParent<CrystalSwitch>();
 

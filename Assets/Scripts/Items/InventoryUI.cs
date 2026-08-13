@@ -29,7 +29,11 @@ public class InventoryUI : MonoBehaviour
     public float animationDuration = 0.25f; // Dauer der Animation in Sekunden
 
     [Header("Gameplay UI zum Ausblenden")]
+    [Tooltip("Ziehe hier alle UI-Elemente rein, die beim Öffnen verschwinden sollen (auch Prompts). Das Skript merkt sich, was vorher aktiv war!")]
     [SerializeField] private List<GameObject> gameplayUIElementsToHide = new List<GameObject>();
+    
+    // Merkt sich dynamisch, welche Gameplay-UIs VOR dem Öffnen wirklich aktiv waren
+    private List<GameObject> previouslyActiveUIElements = new List<GameObject>();
 
     [Header("State")]
     private bool isOpen = false;
@@ -61,7 +65,10 @@ public class InventoryUI : MonoBehaviour
         {
             canvasGroup.alpha = 0f;
         }
-        inventoryPanel.SetActive(false);
+        if (inventoryPanel != null)
+        {
+            inventoryPanel.SetActive(false);
+        }
     }
 
     public void OpenInventory()
@@ -105,7 +112,6 @@ public class InventoryUI : MonoBehaviour
         currentAnimation = StartCoroutine(AnimateInventory(false));
     }
 
-    // Reaktiviert die Steuerung exakt nach 1 Frame und setzt den Zustand zurück
     private IEnumerator EnableCameraInputNextFrame(CinemachineInputAxisController controller)
     {
         yield return null; // Wartet 1 Frame, damit Unity den Cursor-Lock verarbeitet
@@ -122,7 +128,6 @@ public class InventoryUI : MonoBehaviour
         }
     }
 
-    // Coroutine für flüssiges Ein-/Ausblenden auch bei pausiertem Spiel!
     private IEnumerator AnimateInventory(bool open)
     {
         float timer = 0f;
@@ -134,11 +139,8 @@ public class InventoryUI : MonoBehaviour
 
         while (timer < animationDuration)
         {
-            // unscaledDeltaTime nutzen, da timeScale = 0f ist!
             timer += Time.unscaledDeltaTime;
             float progress = Mathf.Clamp01(timer / animationDuration);
-
-            // Weicher Übergang (Smoothstep Curve)
             float smoothProgress = Mathf.SmoothStep(0f, 1f, progress);
 
             if (canvasGroup != null)
@@ -146,18 +148,22 @@ public class InventoryUI : MonoBehaviour
                 canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, smoothProgress);
             }
 
-            inventoryPanel.transform.localScale = Vector3.Lerp(startScale, targetScale, smoothProgress);
+            if (inventoryPanel != null)
+            {
+                inventoryPanel.transform.localScale = Vector3.Lerp(startScale, targetScale, smoothProgress);
+            }
 
             yield return null;
         }
 
         if (canvasGroup != null) canvasGroup.alpha = targetAlpha;
-        inventoryPanel.transform.localScale = targetScale;
-
-        // Nach dem Ausblenden das Panel deaktivieren
-        if (!open)
+        if (inventoryPanel != null)
         {
-            inventoryPanel.SetActive(false);
+            inventoryPanel.transform.localScale = targetScale;
+            if (!open)
+            {
+                inventoryPanel.SetActive(false);
+            }
         }
     }
 
@@ -184,16 +190,41 @@ public class InventoryUI : MonoBehaviour
         if (detailDescriptionText) detailDescriptionText.text = item.description;
     }
 
+    // --- GAMEPLAY UI TOGGLE (SMART) ---
     private void ToggleGameplayUI(bool show)
     {
-        foreach (GameObject uiElement in gameplayUIElementsToHide)
+        if (!show)
         {
-            if (uiElement != null) uiElement.SetActive(show);
+            // VOR DEM AUSBLENDEN: Merken, welche UI-Elemente wirklich aktiv waren
+            previouslyActiveUIElements.Clear();
+
+            foreach (GameObject uiElement in gameplayUIElementsToHide)
+            {
+                if (uiElement != null && uiElement.activeSelf)
+                {
+                    previouslyActiveUIElements.Add(uiElement);
+                    uiElement.SetActive(false);
+                }
+            }
+        }
+        else
+        {
+            // BEIM EINBLENDEN: Nur die wieder anmachen, die vorher aktiv waren!
+            foreach (GameObject uiElement in previouslyActiveUIElements)
+            {
+                if (uiElement != null)
+                {
+                    uiElement.SetActive(true);
+                }
+            }
+            previouslyActiveUIElements.Clear();
         }
     }
 
     void CreateUI()
     {
+        if (inventory == null || slotPrefab == null || slotParent == null) return;
+
         slots = new InventorySlotUI[inventory.inventorySize];
 
         for (int i = 0; i < slots.Length; i++)
@@ -205,28 +236,39 @@ public class InventoryUI : MonoBehaviour
     }
 
     public void UpdateUI()
-{
-    for (int i = 0; i < slots.Length; i++)
     {
-        slots[i].SetItem(inventory.items[i]);
+        if (slots == null || inventory == null) return;
 
-        // Prüft zentral, ob dieser Slot gerade der ausgerüstete Armor- oder Damage-Slot ist!
-        if (i == equippedArmorSlotIndex || i == equippedDamageSlotIndex)
+        for (int i = 0; i < slots.Length; i++)
         {
-            slots[i].isEquipped = true;
-        }
-        else
-        {
-            slots[i].isEquipped = false;
-        }
+            if (inventory.items != null && i < inventory.items.Length)
+            {
+                slots[i].SetItem(inventory.items[i]);
+            }
+            else
+            {
+                slots[i].SetItem(null);
+            }
 
-        slots[i].UpdateVisuals();
+            // Status für Ausrüstung setzen
+            if (i == equippedArmorSlotIndex || i == equippedDamageSlotIndex)
+            {
+                slots[i].isEquipped = true;
+            }
+            else
+            {
+                slots[i].isEquipped = false;
+            }
+
+            slots[i].UpdateVisuals();
+        }
     }
-}
 
     public void DropItem(int index)
     {
-        if (inventory.items[index] == null) return;
+        if (inventory == null || inventory.items == null) return;
+
+        if (index < 0 || index >= inventory.items.Length || inventory.items[index] == null) return;
 
         ItemData item = inventory.items[index];
 
@@ -236,28 +278,24 @@ public class InventoryUI : MonoBehaviour
             return;
         }
 
-        Vector3 spawnPos = (dropPoint != null) ? dropPoint.position : player.position;
+        Vector3 spawnPos = (dropPoint != null) ? dropPoint.position : (player != null ? player.position : transform.position);
         spawnPos += Vector3.up * dropHeightOffset;
 
         Instantiate(item.worldPrefab, spawnPos, Quaternion.identity);
 
-        // --- AUDIO: Wurf-/Drop-Sound abspielen ---
-        if (inventory != null)
-        {
-            inventory.PlayDropSound();
-        }
-
+        inventory.PlayDropSound();
         inventory.RemoveItem(index);
+
         UpdateUI();
         SelectSlot(null);
     }
 
     public InventorySlotUI GetSlotByIndex(int index)
-{
-    if (slots != null && index >= 0 && index < slots.Length)
     {
-        return slots[index];
+        if (slots != null && index >= 0 && index < slots.Length)
+        {
+            return slots[index];
+        }
+        return null;
     }
-    return null;
-}
 }

@@ -17,7 +17,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Knockback Settings")]
     [Tooltip("Wie schnell der Knockback sich nach einem Treffer abbaut")]
     [SerializeField] private float knockbackDamping = 5f;
-    private Vector3 impactVelocity; // Speichert die verbleibende Knockback-Kraft
+    private Vector3 impactVelocity;
 
     [Header("VFX (Speed Lines)")]
     [SerializeField] private ParticleSystem speedLinesParticles;
@@ -32,6 +32,7 @@ public class PlayerMovement : MonoBehaviour
 
     private CharacterController controller;
     private PlayerAttack playerAttack; 
+    private PlayerAnimationController animController; // NEU
     private Transform mainCameraTransform;
     private Vector3 velocity;
 
@@ -41,6 +42,7 @@ public class PlayerMovement : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         playerAttack = GetComponent<PlayerAttack>(); 
+        animController = GetComponent<PlayerAnimationController>(); // NEU
         
         if (Camera.main != null)
         {
@@ -61,7 +63,10 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         // 1. Schwerkraft & Boden-Check
-        if (controller.isGrounded)
+        bool grounded = controller.isGrounded;
+        if (animController != null) animController.SetGrounded(grounded); // NEU
+
+        if (grounded)
         {
             if (velocity.y < 0)
             {
@@ -72,6 +77,7 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 moveDirection = Vector3.zero;
         bool shouldPlayVFX = false;
+        float currentAnimSpeed = 0f; // NEU: Für Animationen
 
         // 2. Bewegung & Rotation
         if (canMove)
@@ -83,6 +89,11 @@ public class PlayerMovement : MonoBehaviour
             bool isAiming = playerAttack != null && playerAttack.IsAiming();
             bool isSprinting = Input.GetKey(sprintKey) && !isAiming;
             float currentSpeed = isSprinting ? sprintSpeed : walkSpeed;
+
+            if (inputDirection.magnitude >= 0.1f)
+            {
+                currentAnimSpeed = isSprinting ? 2f : 1f; // 1 = Walk, 2 = Sprint
+            }
 
             if (isSprinting && inputDirection.magnitude >= 0.1f)
             {
@@ -129,10 +140,15 @@ public class PlayerMovement : MonoBehaviour
             {
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
                 jumpsRemaining--;
+
+                if (animController != null) animController.TriggerJump(); // NEU
             }
 
             HandleRotation(moveDirection);
         }
+
+        // Geschwindigkeits-Wert an Animation Controller senden
+        if (animController != null) animController.SetSpeed(currentAnimSpeed); // NEU
 
         HandleSpeedLinesVFX(shouldPlayVFX);
 
@@ -140,7 +156,6 @@ public class PlayerMovement : MonoBehaviour
         if (impactVelocity.magnitude > 0.2f)
         {
             controller.Move(impactVelocity * Time.deltaTime);
-            // Lässt den Knockback flüssig abklingen
             impactVelocity = Vector3.Lerp(impactVelocity, Vector3.zero, Time.deltaTime * knockbackDamping);
         }
 
@@ -149,12 +164,9 @@ public class PlayerMovement : MonoBehaviour
         controller.Move(velocity * Time.deltaTime);
     }
 
-    /// <summary>
-    /// Fügt dem Spieler eine Stosskraft in eine bestimmte Richtung hinzu.
-    /// </summary>
     public void ApplyKnockback(Vector3 direction, float force)
     {
-        direction.y = 0.1f; // Minimaler Upward-Bounce für besseres Treffergefühl
+        direction.y = 0.1f;
         direction.Normalize();
         impactVelocity = direction * force;
     }

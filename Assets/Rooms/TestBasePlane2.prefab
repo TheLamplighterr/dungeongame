@@ -245,6 +245,9 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 8355701206182167061}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ea82650e99d06cf46b95d8ddf12c25bb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9056882474931485217}
     - targetCorrespondingSourceObject: {fileID: -6738074576313557096, guid: ea82650e99d06cf46b95d8ddf12c25bb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8329248007895046868}
@@ -252,6 +255,32 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 5049591868361476696}
   m_SourcePrefab: {fileID: 100100000, guid: ea82650e99d06cf46b95d8ddf12c25bb, type: 3}
+--- !u!1 &6325650108391928631 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ea82650e99d06cf46b95d8ddf12c25bb, type: 3}
+  m_PrefabInstance: {fileID: 6559581452241047142}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &9056882474931485217
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6325650108391928631}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.0215, y: -0.017, z: 0.05}
+  m_Center: {x: 0, y: 0, z: 0.01}
 --- !u!4 &6666147610609117581 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ea82650e99d06cf46b95d8ddf12c25bb, type: 3}
@@ -296,8 +325,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MapResetTrigger
   uiObjectName: EndRoomPromptUI
+  fadeImageName: ScreenFadeImage
   mainMenuSceneName: "Main Men\xFC"
-  fadeDuration: 0.3
+  promptFadeDuration: 0.3
   teleportVFXPrefab: {fileID: 6441873369525384307, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
   transitionDelay: 1.5
   vfxSpawnPointName: VFX-SpawnPoint

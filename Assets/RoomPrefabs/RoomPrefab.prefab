@@ -376,7 +376,6 @@ Transform:
   m_Children:
   - {fileID: 8123323013031963190}
   - {fileID: 7729718750799683170}
-  - {fileID: 7307428524170225906}
   - {fileID: 4889055390292925735}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -839,68 +838,6 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 4000011650569256, guid: 2cf6690298568294cb6b655c0a3aeb87, type: 3}
   m_PrefabInstance: {fileID: 4888477093456365839}
-  m_PrefabAsset: {fileID: 0}
---- !u!1001 &8392696360985297592
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 4379538631916659307}
-    m_Modifications:
-    - target: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -2.8773503
-      objectReference: {fileID: 0}
-    - target: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.3557
-      objectReference: {fileID: 0}
-    - target: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -2.679697
-      objectReference: {fileID: 0}
-    - target: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6296005617273452000, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-      propertyPath: m_Name
-      value: Rusty-Amulet
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
---- !u!4 &7307428524170225906 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1230022940809439818, guid: 868f2f386ddc4864d8edef166470ac24, type: 3}
-  m_PrefabInstance: {fileID: 8392696360985297592}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8588767188838239709
 PrefabInstance:
