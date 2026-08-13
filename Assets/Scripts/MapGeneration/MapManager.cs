@@ -818,4 +818,10 @@ public class MapManager : MonoBehaviour
     {
         
     }
+    
+    //Signalisiert den Tod des Bossgegners
+    public void BossDefeat()
+    {
+
+    }
 }

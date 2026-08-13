@@ -319,4 +319,18 @@ public class GolemAI : BaseEnemyAI
         Vector3 spawnPos = impactPoint != null ? impactPoint.position : transform.position;
         Instantiate(impactEffect, spawnPos, Quaternion.identity);
     }
+
+    private void OnDestroy()
+{
+    // Prüfen, ob der Golem wirklich gestorben ist (HP <= 0) 
+    // und nicht nur die Szene neu geladen wurde:
+    if (enemyHealth != null && enemyHealth.currentHealth <= 0)
+    {
+        MapManager mapManager = FindObjectOfType<MapManager>();
+        if (mapManager != null)
+        {
+            mapManager.BossDefeat();
+        }
+    }
+}
 }
