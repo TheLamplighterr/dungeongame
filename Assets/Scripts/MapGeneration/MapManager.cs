@@ -811,11 +811,22 @@ public class MapManager : MonoBehaviour
     {
         level++;
 
+        increaseSize();
+
         resetLists();
         easyFixToEndMySuffering();
         if(Quadtree.destroyAllLinkedRooms() == 1)
         {
             generateSimpleMap();
+        }
+    }
+
+    private void increaseSize()
+    {
+        if(poiCount + treasureRoomCount < 20)
+        {
+            poiCount++;
+            treasureRoomCount++;
         }
     }
 
