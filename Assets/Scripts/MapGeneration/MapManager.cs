@@ -300,6 +300,8 @@ public class MapManager : MonoBehaviour
                         {
                             stairsFound = true;
                             simpleMap[x][y - 1][0] = stairsRoom;
+                            simpleMap[x][y - 1][3] = 1;
+                            simpleMap[x][y][1] = 1;
                             spawnField[0] = x;
                             spawnField[1] = y-1;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x, y-1});
@@ -309,6 +311,8 @@ public class MapManager : MonoBehaviour
                         {
                             stairsFound = true;
                             simpleMap[x+1][y][0] = stairsRoom;
+                            simpleMap[x + 1][y][4] = 1;
+                            simpleMap[x][y][2] = 1;
                             spawnField[0] = x+1;
                             spawnField[1] = y;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x+1,y});
@@ -318,6 +322,8 @@ public class MapManager : MonoBehaviour
                         {
                             stairsFound = true;
                             simpleMap[x][y + 1][0] = stairsRoom;
+                            simpleMap[x][y + 1][1] = 1;
+                            simpleMap[x][y][3] = 1;
                             spawnField[0] = x;
                             spawnField[1] = y + 1;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x, y + 1 });
@@ -327,6 +333,8 @@ public class MapManager : MonoBehaviour
                         {
                             stairsFound = true;
                             simpleMap[x-1][y][0] = stairsRoom;
+                            simpleMap[x - 1][y][2] = 1;
+                            simpleMap[x][y][4] = 1;
                             spawnField[0] = x - 1;
                             spawnField[1] = y;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x-1, y });
