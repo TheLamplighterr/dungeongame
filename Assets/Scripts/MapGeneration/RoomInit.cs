@@ -7,6 +7,8 @@ public class RoomInit : MonoBehaviour
     public MapManager mapManager;
     public TreeBranch branch;
 
+    public BossRoomInit bossRoomInit;
+
     public int simpleX;
     public int simpleY;
 
@@ -94,6 +96,10 @@ public class RoomInit : MonoBehaviour
 
     public void destroySelf()
     {
+        if(bossRoomInit != null)
+        {
+            bossRoomInit.destroySelf();
+        }
         GameObject.Destroy(Me);
     }
     

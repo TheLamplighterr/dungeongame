@@ -33,6 +33,13 @@ public class MapManager : MonoBehaviour
 
     public int level = 1;
 
+    private int bossToStairsDir;
+
+    public int GetBossToStairsDir()
+    {
+        return bossToStairsDir;
+    }
+
     public int getLevel()
     {
         return level;
@@ -296,6 +303,7 @@ public class MapManager : MonoBehaviour
                             spawnField[0] = x;
                             spawnField[1] = y-1;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x, y-1});
+                            bossToStairsDir = 1;
                         }
                         else if (((tempRandom + i) % 4) + 1 == 2 && simpleMap[x+1][y][0] == 0)      //rechts versuchen
                         {
@@ -304,6 +312,7 @@ public class MapManager : MonoBehaviour
                             spawnField[0] = x+1;
                             spawnField[1] = y;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x+1,y});
+                            bossToStairsDir = 2;
                         }
                         else if (((tempRandom + i) % 4) + 1 == 3 && simpleMap[x][y + 1][0] == 0)    //unten versuchen
                         {
@@ -312,6 +321,7 @@ public class MapManager : MonoBehaviour
                             spawnField[0] = x;
                             spawnField[1] = y + 1;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x, y + 1 });
+                            bossToStairsDir = 3;
                         }
                         else if (((tempRandom + i) % 4) + 1 == 4 && simpleMap[x-1][y][0] == 0)      //links versuchen
                         {
@@ -320,6 +330,7 @@ public class MapManager : MonoBehaviour
                             spawnField[0] = x - 1;
                             spawnField[1] = y;
                             roomList.Add(new int[] { stairsRoom, roomList.Count, x-1, y });
+                            bossToStairsDir = 4;
                         }
                     }
 
@@ -822,6 +833,10 @@ public class MapManager : MonoBehaviour
     //Signalisiert den Tod des Bossgegners
     public void BossDefeat()
     {
-
+        BossRoomInit bossRoomInit = FindObjectOfType<BossRoomInit>();
+        if (bossRoomInit != null) 
+        { 
+            bossRoomInit.bossDefeat();
+        }
     }
 }
