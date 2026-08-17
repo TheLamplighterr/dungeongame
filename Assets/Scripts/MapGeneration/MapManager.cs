@@ -22,7 +22,7 @@ public class MapManager : MonoBehaviour
 
     //Generelle map einstellungen
     static float scale = 1f;
-    static float distance = 10f;
+    static float distance = 30f;
 
     //einstellungen
     public int[] spawnField = { 0, 0 }; //hier ist der startbereich des Spielers auf deisem level
