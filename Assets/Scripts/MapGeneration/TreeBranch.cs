@@ -225,7 +225,7 @@ public class TreeBranch : MonoBehaviour
 
         int rValue = 0;
 
-        if (lowerLeft == null)
+        if (upperLeft == null)
         {
             createNewBranch(1);
         }
@@ -234,7 +234,7 @@ public class TreeBranch : MonoBehaviour
             expectedReturns++;
             recievedReturns = recievedReturns + upperLeft.destroyAllLinkedRooms();
         }
-        if (lowerLeft == null)
+        if (upperRight == null)
         {
             createNewBranch(2);
         }
@@ -252,7 +252,7 @@ public class TreeBranch : MonoBehaviour
             expectedReturns++;
             recievedReturns = recievedReturns + lowerLeft.destroyAllLinkedRooms();
         }
-        if (lowerLeft == null)
+        if (lowerRight == null)
         {
             createNewBranch(4);
         }
