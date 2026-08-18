@@ -23,6 +23,17 @@ public class ItemPickup : MonoBehaviour
 
             if (added)
             {
+                // NEU: Interaktions-Animation auf dem Spieler auslösen
+                PlayerAnimationController anim = other.GetComponent<PlayerAnimationController>();
+                if (anim == null)
+                {
+                    anim = other.GetComponentInChildren<PlayerAnimationController>();
+                }
+                if (anim != null)
+                {
+                    anim.TriggerInteract();
+                }
+
                 // Sound an der Position des Items abspielen
                 if (pickupSound != null)
                 {

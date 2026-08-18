@@ -18,6 +18,7 @@ public class Chest : MonoBehaviour
 
     private bool isOpened = false;
     private bool playerInRange = false;
+    private GameObject currentPlayerObj; // Speichert Referenz zum Spieler
 
     private void Update()
     {
@@ -38,6 +39,20 @@ public class Chest : MonoBehaviour
             if (addedSuccessfully)
             {
                 isOpened = true;
+
+                // NEU: Interaktions-Animation auf dem Spieler auslösen
+                if (currentPlayerObj != null)
+                {
+                    PlayerAnimationController anim = currentPlayerObj.GetComponent<PlayerAnimationController>();
+                    if (anim == null)
+                    {
+                        anim = currentPlayerObj.GetComponentInChildren<PlayerAnimationController>();
+                    }
+                    if (anim != null)
+                    {
+                        anim.TriggerInteract();
+                    }
+                }
 
                 // 1. UI Prompt verstecken & Pop-up anzeigen
                 if (ChestInteractionUI.Instance != null)
@@ -70,7 +85,7 @@ public class Chest : MonoBehaviour
             }
             else
             {
-                // NEU: Zeigt die rote Warnung im UI-Banner an
+                // Zeigt die rote Warnung im UI-Banner an
                 if (ChestInteractionUI.Instance != null)
                 {
                     ChestInteractionUI.Instance.ShowWarningNotification("Inventory is full!");
@@ -100,6 +115,7 @@ public class Chest : MonoBehaviour
         if (other.CompareTag("Player") && !isOpened)
         {
             playerInRange = true;
+            currentPlayerObj = other.gameObject; // Spieler-Referenz merken
 
             // UI Prompt anzeigen
             if (ChestInteractionUI.Instance != null)
@@ -114,6 +130,7 @@ public class Chest : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInRange = false;
+            currentPlayerObj = null;
 
             // UI Prompt verstecken
             if (ChestInteractionUI.Instance != null)
