@@ -180,44 +180,59 @@ public class EnemyHealth : MonoBehaviour
         enemyRenderer.material.color = originalColor;
     }
 
-    void Die()
+  void Die()
+{
+    isDead = true;
+
+    if (RunStatsManager.Instance != null)
+        RunStatsManager.Instance.AddKill();
+
+    SpawnDeathEffect();
+
+    // 1. Physics & Navigation abschalten
+    if (TryGetComponent(out Collider col)) col.enabled = false;
+    if (TryGetComponent(out Rigidbody rb)) rb.isKinematic = true;
+
+    if (TryGetComponent(out UnityEngine.AI.NavMeshAgent agent))
     {
-        isDead = true;
+        if (agent.isOnNavMesh) agent.isStopped = true;
+        agent.enabled = false;
+    }
 
-        if (RunStatsManager.Instance != null)
-            RunStatsManager.Instance.AddKill();
-
-        SpawnDeathEffect();
-
-        if (TryGetComponent(out PoisonPlant plant))
+    // 2. Alle KI-Skripte & Coroutinen abwürgen
+    MonoBehaviour[] allScripts = GetComponents<MonoBehaviour>();
+    foreach (MonoBehaviour script in allScripts)
+    {
+        if (script != this)
         {
-            plant.PlayDeathAnimation();
-        }
-
-        if (TryGetComponent(out Collider col))
-            col.enabled = false;
-
-        if (TryGetComponent(out Rigidbody rb))
-            rb.isKinematic = true;
-
-        if (TryGetComponent(out UnityEngine.AI.NavMeshAgent agent))
-            agent.isStopped = true;
-
-        MonoBehaviour ai = GetComponent<BaseEnemyAI>();
-        if (ai != null)
-            ai.enabled = false;
-
-        if (animator != null && !string.IsNullOrEmpty(deathAnimation))
-        {
-            animator.CrossFade(deathAnimation, 0.1f);
-            Destroy(gameObject, deathAnimationLength);
-        }
-        else
-        {
-            Destroy(gameObject, deathAnimationLength > 0 ? deathAnimationLength : 3f);
+            script.StopAllCoroutines();
+            script.enabled = false;
         }
     }
 
+    // 3. ANIMATOR & TODES-HANDLING
+    if (animator != null && !string.IsNullOrEmpty(deathAnimation))
+    {
+        // Hat eine eigene Animation
+        animator.CrossFade(deathAnimation, 0.1f);
+        Destroy(gameObject, deathAnimationLength);
+    }
+    else
+    {
+        // KEINE Sterbe-Animation (z.B. beim Slime):
+        
+        // A) Animator sofort stoppen, damit er nicht weiter hüpft
+        if (animator != null) 
+            animator.enabled = false; 
+
+        // B) Falls vorhanden: Das optische Modell / Mesh sofort ausblenden
+        if (enemyRenderer != null) 
+            enemyRenderer.enabled = false; 
+
+        // C) Objekt sofort oder nach kurzem VFX-Ende löschen (z. B. nach 0.2 Sekunden)
+        Destroy(gameObject, 0.2f); 
+    }
+}
     void SpawnDeathEffect()
     {
         if (deathEffectPrefab == null)

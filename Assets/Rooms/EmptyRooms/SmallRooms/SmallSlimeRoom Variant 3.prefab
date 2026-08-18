@@ -674,7 +674,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6228091543019268502, guid: 82c321ec277363f44a4a5f05010bbeb6, type: 3}
       propertyPath: m_Name
-      value: EmptySmallRoom Variant 2
+      value: SmallSlimeRoom Variant 3
       objectReference: {fileID: 0}
     - target: {fileID: 6228091543019268502, guid: 82c321ec277363f44a4a5f05010bbeb6, type: 3}
       propertyPath: m_IsActive
@@ -1098,7 +1098,7 @@ MonoBehaviour:
   hitVfxScale: 1.5
   deathEffectPrefab: {fileID: 6042243990886550057, guid: af44cbf49172b8d42b452221c9638892, type: 3}
   deathVfxScale: 2
-  animator: {fileID: 0}
+  animator: {fileID: 5372236344549747282}
   deathAnimation: 
   deathAnimationLength: 0
 --- !u!114 &1031588083055055431

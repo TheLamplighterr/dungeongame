@@ -2625,7 +2625,7 @@ MonoBehaviour:
   hitVfxScale: 1.5
   deathEffectPrefab: {fileID: 6042243990886550057, guid: af44cbf49172b8d42b452221c9638892, type: 3}
   deathVfxScale: 2
-  animator: {fileID: 0}
+  animator: {fileID: 1382192003181790959}
   deathAnimation: 
   deathAnimationLength: 0
 --- !u!114 &7665251121477545173
@@ -3080,7 +3080,7 @@ MonoBehaviour:
   hitVfxScale: 1.5
   deathEffectPrefab: {fileID: 6042243990886550057, guid: af44cbf49172b8d42b452221c9638892, type: 3}
   deathVfxScale: 2
-  animator: {fileID: 0}
+  animator: {fileID: 8838071327358723271}
   deathAnimation: 
   deathAnimationLength: 0
 --- !u!114 &3407231226852482445
@@ -3459,7 +3459,7 @@ MonoBehaviour:
   hitVfxScale: 1.5
   deathEffectPrefab: {fileID: 6042243990886550057, guid: af44cbf49172b8d42b452221c9638892, type: 3}
   deathVfxScale: 2
-  animator: {fileID: 0}
+  animator: {fileID: 3516369841272983763}
   deathAnimation: 
   deathAnimationLength: 0
 --- !u!114 &3607152535310163716

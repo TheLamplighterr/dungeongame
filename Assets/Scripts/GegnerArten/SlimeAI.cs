@@ -182,4 +182,5 @@ public class SlimeAI : BaseEnemyAI
 
         Debug.Log("[SlimeAI] Impact spawned");
     }
+    
 }
