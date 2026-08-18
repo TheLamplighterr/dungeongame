@@ -496,6 +496,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5635128829754421740}
   - component: {fileID: 1128075780359734296}
+  - component: {fileID: 1070235886132608883}
   m_Layer: 0
   m_Name: MediumLamplingRoomRoom Variant 1
   m_TagString: Untagged
@@ -549,6 +550,38 @@ MonoBehaviour:
   mainTransform: {fileID: 0}
   path: 0
   openings: 
+--- !u!114 &1070235886132608883
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4538073746679506480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 0
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_UseGeometry: 0
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: 570547c39158c9d409a361880df9c5d1, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1 &4929458294837753461
 GameObject:
   m_ObjectHideFlags: 0
@@ -783,7 +816,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1749672260794246460, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2692068578966624326, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_ApplyRootMotion
@@ -847,7 +880,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6689649681875898932, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6722319145400333130, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Name
@@ -859,7 +892,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7914613286207825613, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7914613286207825613, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_BaseOffset
@@ -875,7 +908,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9155254450686671375, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9155254450686671375, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: healthCanvas
@@ -905,7 +938,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1749672260794246460, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2692068578966624326, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_ApplyRootMotion
@@ -969,7 +1002,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6689649681875898932, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6722319145400333130, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Name
@@ -981,7 +1014,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7914613286207825613, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7914613286207825613, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_BaseOffset
@@ -997,7 +1030,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9155254450686671375, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9155254450686671375, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: healthCanvas
@@ -1027,7 +1060,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1749672260794246460, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2692068578966624326, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_ApplyRootMotion
@@ -1091,7 +1124,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6689649681875898932, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6722319145400333130, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Name
@@ -1103,7 +1136,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7914613286207825613, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7914613286207825613, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_BaseOffset
@@ -1119,7 +1152,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9155254450686671375, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9155254450686671375, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: healthCanvas
@@ -1149,7 +1182,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1749672260794246460, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2692068578966624326, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_ApplyRootMotion
@@ -1173,7 +1206,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6197420422163900912, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.141
       objectReference: {fileID: 0}
     - target: {fileID: 6197420422163900912, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1213,7 +1246,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6689649681875898932, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6722319145400333130, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Name
@@ -1225,7 +1258,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7914613286207825613, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7914613286207825613, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_BaseOffset
@@ -1241,7 +1274,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9155254450686671375, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9155254450686671375, guid: dea27b149489c704e81ee241f3693669, type: 3}
       propertyPath: healthCanvas
